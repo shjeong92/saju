@@ -1,0 +1,19 @@
+{
+  "name": "@saju/graphql",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pothos/core": "^4.3.0",
+    "@saju/db": "workspace:*",
+    "@saju/saju": "workspace:*",
+    "@saju/shared": "workspace:*",
+    "graphql": "^16.9.0"
+  }
+}

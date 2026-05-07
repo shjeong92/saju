@@ -1,0 +1,21 @@
+{
+  "name": "@saju/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saju/ai": "workspace:*",
+    "@saju/db": "workspace:*",
+    "@saju/graphql": "workspace:*",
+    "@saju/saju": "workspace:*",
+    "@saju/shared": "workspace:*",
+    "graphql-yoga": "^5.10.4",
+    "hono": "^4.6.13",
+    "ioredis": "^5.4.1"
+  }
+}

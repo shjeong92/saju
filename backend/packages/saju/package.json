@@ -1,0 +1,17 @@
+{
+  "name": "@saju/saju",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@saju/shared": "workspace:*",
+    "ssaju": "^0.1.0"
+  }
+}

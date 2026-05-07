@@ -1,0 +1,19 @@
+{
+  "name": "@saju/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saju/ai": "workspace:*",
+    "@saju/db": "workspace:*",
+    "@saju/saju": "workspace:*",
+    "@saju/shared": "workspace:*",
+    "bullmq": "^5.34.0",
+    "ioredis": "^5.4.1"
+  }
+}

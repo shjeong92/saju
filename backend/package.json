@@ -1,0 +1,22 @@
+{
+  "name": "saju-backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter='*' dev",
+    "build": "bun run --filter='*' build",
+    "typecheck": "bun run --filter='*' typecheck",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bun": "latest",
+    "typescript": "^5.6.3"
+  }
+}
