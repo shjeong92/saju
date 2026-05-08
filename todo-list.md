@@ -78,20 +78,23 @@
 
 ## Day 2 오전 - GraphQL 인프라
 
-> 🔄 **선행 작업 추가 발생**: `@pothos/plugin-drizzle@0.17`이 drizzle-orm `>=1.0.0-beta.2` peer 요구
-> → drizzle-orm 0.45.2 → **1.0-rc.2** 업그레이드 (RQBv2 마이그레이션 포함). 커밋 `7c5a0e5`로 분리.
-
 - [x] `packages/graphql` Pothos 셋업 + 빌더 정의
 - [x] Pothos 플러그인 5종 등록: errors, relay, dataloader, scope-auth, drizzle (04-pothos-yoga §7)
-- [ ] Yoga를 Hono `/graphql` 라우트에 마운트
-- [ ] GraphQL context: JWT 검증 → userId 주입 + db + loaders (07 §4) — 타입은 정의됨, factory 구현 필요
-- [ ] Scalar (DateTime, Date) + Enum (모든 enum) 등록
-- [ ] User / UserProfile / SajuChart / PersonalReading / DailyFortune 객체 타입
-- [ ] DataLoader 직접 작성 1개 (matchesByUserId) (05-dataloader §2)
-- [ ] `loadableObject` 1개 (UserType을 loadable로) (05-dataloader §5)
-- [ ] Query.me / Query.myReading / Query.myDailyFortune 리졸버
-- [ ] Mutation.submitSaju + Mutation.updateProfile 리졸버
-- [ ] GraphQL Yoga UI에서 수동 검증 (`/graphql`)
+- [x] Yoga를 Hono `/graphql` 라우트에 마운트
+- [x] GraphQL context: JWT 검증 → userId 주입 + db + loaders (07 §4) — `createGraphQLContext` factory 분리, JWT/BullMQ 모두 콜백 주입
+- [x] Scalar (DateTime, Date) + Enum (모든 enum) 등록 — Enum 7종 (Gender/CalendarType/MatchStatus/MessageType/GenerationStatus/FortuneScore/AuthProvider)
+- [x] User / UserProfile / SajuChart / PersonalReading / DailyFortune 객체 타입 — drizzleObject 활용, jsonb는 별도 ObjectType으로 한자→영문 매핑
+- [x] DataLoader 직접 작성 1개 (matchesByUserId) (05-dataloader §2)
+- [x] `loadableObject` 1개 (LoadableUser) — SajuChart.owner에서 실사용 (05-dataloader §5)
+- [x] Query.me / Query.myReading / Query.myDailyFortune 리졸버 (모두 authenticated scope-auth)
+- [x] Mutation.submitSaju + Mutation.updateProfile 리졸버 (REST 트랜잭션 패턴 + BullMQ 콜백 주입)
+- [x] GraphQL Yoga UI에서 수동 검증 (`/graphql`) — introspection + me/submitSaju/myReading e2e 통과
+
+✅ 검증 완료:
+- 인증 X → scope-auth가 `me`/`myReading`/`myDailyFortune` 차단
+- JWT Bearer → `me { id name email }` 정상 반환
+- `mutation submitSaju` → 만세력 즉시 응답 + ai.profile-reading 잡 enqueue + LoadableUser owner 동시 fetch
+- `myReading` → status `pending` 정상 노출
 
 ## Day 2 오후 - 매칭 + 일일 운세 + 테스트
 
@@ -201,16 +204,16 @@
 - [x] §8 Studio (`bun run db:studio` 부팅 확인, https://local.drizzle.studio — 11개 테이블 정상)
 
 ### 04-pothos-yoga
-- [x] §2 builder (`packages/graphql/src/builder.ts` SchemaBuilder<{Context, AuthScopes, DrizzleRelations, ...}>)
-- [ ] §3 Object Type
-- [ ] §4 Mutation
-- [ ] §5 Yoga + Hono 통합
+- [x] §2 builder (packages/graphql/src/builder.ts)
+- [x] §3 Object Type (drizzleObject 5종 + objectRef 보조 타입)
+- [x] §4 Mutation (submitSaju + updateProfile)
+- [x] §5 Yoga + Hono 통합 (apps/api/src/routes/graphql.ts)
 - [x] §7 Plugin 5종 (errors, relay, dataloader, scope-auth, drizzle)
 
 ### 05-dataloader
-- [ ] §2 createLoaders 직접 작성
-- [ ] §3 context per-request 인스턴스
-- [ ] §5 loadableObject
+- [x] §2 createLoaders 직접 작성 (matchesByUserId)
+- [x] §3 context per-request 인스턴스 (createGraphQLContext에서 매 요청 생성)
+- [x] §5 loadableObject (LoadableUser, SajuChart.owner에서 사용)
 
 ### 06-bullmq
 - [x] §2 Queue/Worker 분리 (apps/api/src/queues + apps/worker/src/jobs)
@@ -224,10 +227,10 @@
 - [x] §1 Layered 구조 (Bun workspace)
 - [x] §8 Docker compose dev (api+worker+postgres+redis)
 - [x] §3 env.ts zod (packages/shared/src/env.ts, 부팅 시점 검증)
-- [ ] §4 Context 패턴 (Yoga context factory) ← Day 2
+- [x] §4 Context 패턴 (createGraphQLContext factory, JWT/BullMQ 콜백 주입)
 - [x] §5 인증 (Hono 미들웨어 attachUser/requireAuth + JWT)
-- [ ] §6 권한 (scope-auth) ← Day 2
-- [ ] §7 vitest ← Day 2
+- [x] §6 권한 (scope-auth: authenticated scope, Query.me/myReading/myDailyFortune + Mutation 양쪽 적용)
+- [ ] §7 vitest ← Day 2 오후
 
 ## 마인드셋 체크 (학습 README §마인드셋)
 
@@ -243,16 +246,16 @@
 - 사전 준비: 4/6 완료
 - Day 1 오전: 10/10 완료 ✅
 - Day 1 오후: 18/19 완료 ✅ (FlowProducer만 남음 — Day 2 매칭 잡과 함께)
-- Day 2 오전: **2/11** (Pothos builder + 플러그인 5종 셋업 완료, Yoga 마운트부터 이어서)
+- Day 2 오전: 11/11 완료 ✅
 - Day 2 오후: 0/13
 - Day 3 오전: 0/10
 - Day 3 오후: 0/13
 - 출시 직후: 0/4
 
-**전체: 34/86 = 40% 진행**
+**전체: 43/86 = 50% 진행**
 
-> 📝 **다음 세션 시작점**: Day 2 오전 Step 2 (Yoga를 Hono `/graphql`에 마운트 + Context factory 구현)
-> 직전 커밋: `7ac5e43 feat(graphql): Pothos builder + 플러그인 5종 셋업`
+> 📝 **다음 세션 시작점**: Day 2 오후 — 매칭 도메인 (`packages/saju/relations.ts`, `tenGods.ts`, `compatibility.ts`) 부터 시작
+> 직전 커밋: `0ba1e5c feat(api): Hono /graphql 라우트에 Yoga 마운트`
 
 ## 진행 순서 (지금부터)
 
