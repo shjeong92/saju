@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import { attachUser } from "./middleware/auth.ts";
 import { contextMiddleware } from "./middleware/context.ts";
 import { authRoutes } from "./routes/auth.ts";
+import { graphqlRoutes } from "./routes/graphql.ts";
 import { sajuRoutes } from "./routes/saju.ts";
 import type { AppEnv } from "./types.ts";
 
@@ -17,6 +18,7 @@ app.get("/health", (c) => c.json({ ok: true, service: "api" }));
 
 app.route("/auth", authRoutes);
 app.route("/saju", sajuRoutes);
+app.route("/graphql", graphqlRoutes);
 
 const port = env.API_PORT;
 
