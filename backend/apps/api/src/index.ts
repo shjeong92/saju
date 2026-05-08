@@ -1,14 +1,26 @@
+import { env } from "@saju/shared/env";
 import { Hono } from "hono";
+import { logger } from "hono/logger";
+import { attachUser } from "./middleware/auth.ts";
+import { contextMiddleware } from "./middleware/context.ts";
+import { authRoutes } from "./routes/auth.ts";
+import type { AppEnv } from "./types.ts";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
+
+app.use("*", logger());
+app.use("*", contextMiddleware);
+app.use("*", attachUser);
 
 app.get("/health", (c) => c.json({ ok: true, service: "api" }));
 
-const port = Number(process.env.PORT ?? 4000);
+app.route("/auth", authRoutes);
+
+const port = env.API_PORT;
+
+console.log(`[api] listening on http://localhost:${port}`);
 
 export default {
   port,
   fetch: app.fetch,
 };
-
-console.log(`[api] listening on http://localhost:${port}`);
