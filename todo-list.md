@@ -139,34 +139,68 @@
 - `mutation likeMatch` Alice → status liked, Bob → status matched + chat_rooms 자동 생성 확인
 - 잡은 진짜 버그 1건: BullMQ 5.x jobId 콜론 포함 시 정확히 3토큰 요구 → match-curate/compatibility jobId에 :v1 패딩으로 해결
 
-## Day 3 오전 - 채팅 (WebSocket + Subscription)
+## Day 3 오전 - 채팅 (WebSocket + Subscription) ✅
 
-- [ ] Hono WebSocket 라우트 (`/ws`) + JWT 검증
-- [ ] Redis pub/sub 어댑터 (ioredis) - 채널: `chat:room:<roomId>`
-- [ ] `Mutation.sendMessage` (messages INSERT + chat_rooms 메타 UPDATE + Redis pub)
-- [ ] `Mutation.markRoomRead` (readByA/readByB UPDATE)
-- [ ] `Subscription.messageAdded(roomId)` (Redis sub → 클라이언트 푸시)
-- [ ] `Subscription.matchSuggested` (새 매칭 발생 시 푸시)
-- [ ] `Subscription.readingReady` (personal_readings status='completed' 시 푸시)
-- [ ] `Subscription.reportReady` (compatibility_reports status='completed' 시 푸시)
-- [ ] 채팅방 진입 시 system 메시지 자동 표시 (compatibility_reports.firstDateIdeas 활용)
-- [ ] 참여자 본인만 메시지 송수신 가능한 가드 (scope-auth)
+- [x] Hono WebSocket 라우트 (`/ws` 대신 `/graphql` 같은 endpoint에 graphql-ws upgrade) + JWT 검증 (connection_init payload)
+- [x] Redis pub/sub 어댑터 (ioredis publisher/subscriber 분리) - Topics 헬퍼로 추상화
+- [x] `Mutation.sendMessage` (messages INSERT + chat_rooms.lastMessageAt UPDATE + Redis publish)
+- [x] `Mutation.markRoomRead` (readByA/readByB UPDATE)
+- [x] `Subscription.messageAdded(roomId)` (Redis sub → 클라이언트 푸시)
+- [x] `Subscription.matchSuggested` (likeMatch 시 partner에게 publish)
+- [x] `Subscription.readingReady` (워커가 profile-reading 완료 시 publish)
+- [x] `Subscription.reportReady` (워커가 compatibility 완료 시 publish)
+- [x] 채팅방 진입 시 system 메시지 자동 표시 (likeMatch에서 양쪽 like 시 chat_rooms 생성 + system 메시지 INSERT + publish)
+- [x] 참여자 본인만 메시지 송수신 가능한 가드 (chatRoom resolver / sendMessage / markRoomRead 모두 userA/B 체크)
+
+✅ 검증 완료:
+- graphql-ws connection_init JWT 인증 통과
+- Alice ↔ Bob 채팅방 (1e64e90b-5aa9-4575-b4c1-168b4b5431b5) e2e 메시지 송수신
+- Redis pub/sub 채널 `chat:room:<roomId>` 라우팅 정상
+- likeMatch → chat_rooms onConflictDoNothing INSERT + system 메시지 publish 통과
+- 참여자 아닌 사용자 chatRoom 접근 → null 반환 (Block 2에서 검증, "chatRoom not found" fallback UI)
 
 ## Day 3 오후 - 프론트 + 배포
 
-### 프론트
+### 프론트 (Bottom-up + 블록 단위 진행)
 
-- [ ] Auth.js v5 설치 + 구글 provider
-- [ ] Auth.js callbacks.signIn → 백엔드 `/auth/upsert` 호출 → JWT를 session에 저장
-- [ ] urql 클라이언트 셋업 + Authorization 헤더 자동 부착
-- [ ] urql subscriptionExchange (graphql-ws)
-- [ ] 페이지: 로그인 (구글 버튼)
-- [ ] 페이지: 사주 입력 폼 (생년월일시 + 양/음력 + 성별)
-- [ ] 페이지: 내 사주 풀이 (PersonalReading status별 분기 UI)
-- [ ] 페이지: 일일 운세 (오늘자)
+#### Block 1+2: Auth.js v5 + urql + graphql-ws 인프라 ✅ (커밋 4452c0f)
+- [x] Auth.js v5 설치 + 구글 provider (next-auth@5.0.0-beta.31)
+- [x] Auth.js callbacks.signIn → 백엔드 `/auth/upsert` 호출 → JWT를 session에 저장 (signIn/jwt/session callback chain + types augmentation)
+- [x] urql 클라이언트 셋업 + Authorization 헤더 자동 부착 (fetchOptions 콜백 + tokenRef 패턴)
+- [x] urql subscriptionExchange (graphql-ws + connectionParams 콜백)
+- [x] 페이지: 로그인 (구글 버튼 + dev-login Alice/Bob 버튼 — `AUTH_ALLOW_DEV_LOGIN=true` 가드)
+- [x] middleware.ts edge-safe NextAuth + auth.config.ts/auth.ts 분리 (V8 isolate 대응)
+
+#### Block 3: GraphQL Codegen ✅ (커밋 ef4617c)
+- [x] @graphql-codegen/cli + client-preset 셋업 (introspection over HTTP)
+- [x] codegen.ts + package.json scripts (codegen / codegen:watch)
+- [x] src/gql/ 자동 생성 (gitignore)
+- [x] Playground.tsx의 gql`...` → graphql(`...`) 마이그레이션
+- [x] typecheck 검증: 일부러 오타/nullable 미처리 → 컴파일 에러로 잡힘 확인
+
+#### Block 4: 사주 입력 페이지 ✅ (커밋 1b71d3c)
+- [x] 페이지: 사주 입력 폼 (생년월일시 + 양/음력 + 성별 + 매칭 선호도, 10필드)
+- [x] enum 처리 정통 패턴 (`as const satisfies readonly { value: Enum; label: string }[]`)
+- [x] 클라이언트 검증 (필수값, 연령 범위)
+- [x] 제출 후 router.push('/reading')
+- [x] e2e 검증: Alice 폼 제출 → DB 4개 테이블(saju_inputs/saju_charts/user_profiles/personal_readings) INSERT/UPDATE + BullMQ enqueue
+
+#### Block 5: 내 사주 풀이 + 일일 운세 ✅ (커밋 bf1110e)
+- [x] 페이지: 내 사주 풀이 (PersonalReading status별 분기 UI: pending/generating/completed/failed)
+- [x] 페이지: 일일 운세 (오늘자, score별 색깔 매핑 + sections)
+- [x] polling 패턴 정립 (isInProgress 인 동안 setInterval(refetch, 5000) + useEffect cleanup)
+- [x] `as const satisfies Record<Enum, ...>` 패턴 (SCORE_META 모든 enum 값 빠짐없이 다루는지 컴파일 강제)
+- [x] e2e 검증: 백엔드 → 워커 → AI(Claude) → DB → 프론트 데이터 흐름 통과
+
+#### Block 6: 매칭 피드 + 매칭 상세 ⏳ (다음 세션)
 - [ ] 페이지: 매칭 피드 (점수 카드 + like/dismiss 버튼)
 - [ ] 페이지: 매칭 상세 + 궁합 리포트 (status별 분기 UI)
-- [ ] 페이지: 채팅방 리스트 + 채팅방 (메시지 송수신 + Subscription)
+
+#### Block 7: 채팅방 ⏳ (Block 6 후)
+- [ ] 페이지: 채팅방 리스트 + 채팅방 본 페이지 (메시지 송수신 + Subscription, Playground.tsx 패턴 재사용)
+
+#### 마무리 ⏳
+- [ ] 로그인 페이지 prod 디자인 (현재 임시 버튼만)
 
 ### 배포
 
@@ -260,18 +294,17 @@
 - Day 1 오후: 18/19 완료 ✅ (FlowProducer는 콜백 enqueue로 대체)
 - Day 2 오전: 11/11 완료 ✅
 - Day 2 오후: 13/13 완료 ✅
-- Day 3 오전: 0/10
-- Day 3 오후: 0/13
+- Day 3 오전: 10/10 완료 ✅
+- Day 3 오후: 9/13 완료 (Block 1~5: 인프라 + 폼 + 풀이/운세) — Block 6/7 미진행
 - 출시 직후: 0/4
 
-**전체: 56/86 = 65% 진행**
+**전체: 75/86 = 87% 진행**
 
-> 📝 **다음 세션 시작점**: 일정 재설계 결정 필요. 옵션:
-> - **A**: 사주 입력 페이지 1장부터 화면 붙이기 (백엔드 검증된 김에 인프라 검증)
-> - **B**: Day 3 오전 채팅 WS + Subscription 구현 (todo 원안)
-> - **C**: 더미 시드 스크립트 → 매칭 시나리오 다양하게 e2e 검증 후 진입
+> 📝 **다음 세션 시작점**: Block 6 매칭 피드 + 매칭 상세 페이지
+> - 그 다음 Block 7 채팅방 리스트 + 채팅방 본 페이지 (Playground.tsx 패턴 재사용)
+> - 마무리: 로그인 페이지 prod 디자인, 배포 (OCI + Vercel)
 >
-> 직전 커밋: `a4f5885 fix(deps): drizzle-orm 1.0.0-rc.2 강제 (plugin-drizzle 0.45.2 dedupe)`
+> 직전 커밋: `bf1110e feat(frontend): 내 사주 풀이 + 일일 운세 페이지 — Day 3 오후 Block 5`
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 
