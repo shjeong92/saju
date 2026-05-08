@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 
+const navLink = {
+  display: "inline-block",
+  padding: "8px 12px",
+  border: "1px solid #000",
+  borderRadius: 6,
+  textDecoration: "none",
+  color: "#000",
+} as const;
+
 export default async function Home() {
   const session = await auth();
 
@@ -31,20 +40,10 @@ export default async function Home() {
               : "(없음)"}
           </p>
 
-          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <Link
-              href="/saju"
-              style={{
-                display: "inline-block",
-                padding: "8px 12px",
-                border: "1px solid #000",
-                borderRadius: 6,
-                textDecoration: "none",
-                color: "#000",
-              }}
-            >
-              사주 입력하러 가기
-            </Link>
+          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Link href="/saju" style={navLink}>사주 입력</Link>
+            <Link href="/reading" style={navLink}>내 풀이</Link>
+            <Link href="/fortune" style={navLink}>오늘의 운세</Link>
           </div>
 
           <form
