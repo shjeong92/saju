@@ -31,6 +31,22 @@ export default async function Home() {
               : "(없음)"}
           </p>
 
+          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+            <Link
+              href="/saju"
+              style={{
+                display: "inline-block",
+                padding: "8px 12px",
+                border: "1px solid #000",
+                borderRadius: 6,
+                textDecoration: "none",
+                color: "#000",
+              }}
+            >
+              사주 입력하러 가기
+            </Link>
+          </div>
+
           <form
             action={async () => {
               "use server";
