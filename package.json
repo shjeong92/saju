@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run scripts/dev.ts",
+    "dev:all": "bun run scripts/dev.ts",
     "dev:backend": "cd backend && bun run dev",
     "dev:frontend": "cd frontend && bun run dev",
     "dev:infra": "docker compose -f infra/docker-compose.dev.yml up -d",
