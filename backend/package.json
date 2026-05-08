@@ -18,5 +18,8 @@
     "@biomejs/biome": "^1.9.4",
     "@types/bun": "latest",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "drizzle-orm": "1.0.0-rc.2"
   }
 }
