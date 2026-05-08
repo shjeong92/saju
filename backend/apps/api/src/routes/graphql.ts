@@ -7,7 +7,13 @@ import {
 import { Hono } from "hono";
 import { createYoga } from "graphql-yoga";
 import { verifyUserToken } from "../lib/jwt.ts";
-import { getAiQueue, profileReadingJobId } from "../queues/index.ts";
+import {
+  dailyFortuneJobId,
+  getAiQueue,
+  getMatchQueue,
+  matchCurateJobId,
+  profileReadingJobId,
+} from "../queues/index.ts";
 import type { AppEnv } from "../types.ts";
 
 const yoga = createYoga<{ req: Request }, GraphQLContext>({
@@ -24,6 +30,20 @@ const yoga = createYoga<{ req: Request }, GraphQLContext>({
           "profile-reading",
           { userId, readingId, version },
           { jobId: profileReadingJobId(userId, version) },
+        );
+      },
+      enqueueMatchCurate: async (userId, topK) => {
+        await getMatchQueue().add(
+          "curate",
+          { userId, topK },
+          { jobId: matchCurateJobId(userId) },
+        );
+      },
+      enqueueDailyFortune: async (userId, forDate) => {
+        await getAiQueue().add(
+          "daily-fortune",
+          { userId, forDate },
+          { jobId: dailyFortuneJobId(userId, forDate) },
         );
       },
     }),

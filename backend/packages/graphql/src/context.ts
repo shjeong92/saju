@@ -8,11 +8,23 @@ export type EnqueueProfileReading = (
   version: string,
 ) => Promise<void>;
 
+export type EnqueueMatchCurate = (
+  userId: UserId,
+  topK: number,
+) => Promise<void>;
+
+export type EnqueueDailyFortune = (
+  userId: UserId,
+  forDate: string,
+) => Promise<void>;
+
 export type GraphQLContext = {
   db: Db;
   userId: UserId | null;
   loaders: Loaders;
   enqueueProfileReading: EnqueueProfileReading;
+  enqueueMatchCurate: EnqueueMatchCurate;
+  enqueueDailyFortune: EnqueueDailyFortune;
 };
 
 export type CreateContextArgs = {
@@ -20,10 +32,19 @@ export type CreateContextArgs = {
   request: Request;
   resolveUserId: (token: string) => UserId | null;
   enqueueProfileReading: EnqueueProfileReading;
+  enqueueMatchCurate: EnqueueMatchCurate;
+  enqueueDailyFortune: EnqueueDailyFortune;
 };
 
 export function createGraphQLContext(args: CreateContextArgs): GraphQLContext {
-  const { db, request, resolveUserId, enqueueProfileReading } = args;
+  const {
+    db,
+    request,
+    resolveUserId,
+    enqueueProfileReading,
+    enqueueMatchCurate,
+    enqueueDailyFortune,
+  } = args;
   const header =
     request.headers.get("authorization") ??
     request.headers.get("Authorization");
@@ -36,5 +57,7 @@ export function createGraphQLContext(args: CreateContextArgs): GraphQLContext {
     userId,
     loaders: createLoaders(db),
     enqueueProfileReading,
+    enqueueMatchCurate,
+    enqueueDailyFortune,
   };
 }

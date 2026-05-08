@@ -5,7 +5,13 @@ import { computeSajuChart } from "@saju/saju";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth } from "../middleware/auth.ts";
-import { getAiQueue, profileReadingJobId } from "../queues/index.ts";
+import {
+  dailyFortuneJobId,
+  getAiQueue,
+  getMatchQueue,
+  matchCurateJobId,
+  profileReadingJobId,
+} from "../queues/index.ts";
 import type { AppEnv } from "../types.ts";
 
 const submitSchema = z.object({
@@ -22,6 +28,16 @@ const submitSchema = z.object({
 });
 
 const READING_VERSION = "v1";
+
+function todayInSeoul(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
 
 export const sajuRoutes = new Hono<AppEnv>()
   .use("*", requireAuth)
@@ -126,7 +142,19 @@ export const sajuRoutes = new Hono<AppEnv>()
 
       if (!reading) throw new Error("personal_readings upsert failed");
 
-      return { readingId: reading.id };
+      const today = todayInSeoul();
+      await tx
+        .insert(schema.dailyFortunes)
+        .values({
+          userId: user.userId,
+          forDate: today,
+          status: "pending",
+        })
+        .onConflictDoNothing({
+          target: [schema.dailyFortunes.userId, schema.dailyFortunes.forDate],
+        });
+
+      return { readingId: reading.id, forDate: today };
     });
 
     await getAiQueue().add(
@@ -136,9 +164,19 @@ export const sajuRoutes = new Hono<AppEnv>()
         readingId: result.readingId,
         version: READING_VERSION,
       },
-      {
-        jobId: profileReadingJobId(user.userId, READING_VERSION),
-      },
+      { jobId: profileReadingJobId(user.userId, READING_VERSION) },
+    );
+
+    await getAiQueue().add(
+      "daily-fortune",
+      { userId: user.userId, forDate: result.forDate },
+      { jobId: dailyFortuneJobId(user.userId, result.forDate) },
+    );
+
+    await getMatchQueue().add(
+      "curate",
+      { userId: user.userId, topK: 10 },
+      { jobId: matchCurateJobId(user.userId) },
     );
 
     return c.json({
