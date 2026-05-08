@@ -1,13 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
-  "files": [],
-  "references": [
-    { "path": "./apps/api" },
-    { "path": "./apps/worker" },
-    { "path": "./packages/db" },
-    { "path": "./packages/graphql" },
-    { "path": "./packages/saju" },
-    { "path": "./packages/ai" },
-    { "path": "./packages/shared" }
+  "include": [
+    "apps/*/src/**/*",
+    "packages/*/src/**/*"
   ]
 }

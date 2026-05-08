@@ -1,17 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "./src",
-    "composite": true,
-    "noEmit": false,
-    "outDir": "./dist"
-  },
-  "include": ["src/**/*"],
-  "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/db" },
-    { "path": "../../packages/graphql" },
-    { "path": "../../packages/saju" },
-    { "path": "../../packages/ai" }
-  ]
+  "include": ["src/**/*"]
 }
