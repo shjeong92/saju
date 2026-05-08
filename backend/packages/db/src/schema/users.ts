@@ -19,6 +19,39 @@ import {
   genderEnum,
 } from "./enums.ts";
 
+type FiveElements = Record<"목" | "화" | "토" | "금" | "수", number>;
+
+type TenGods = {
+  year: { stem: string; branch: string };
+  month: { stem: string; branch: string };
+  day: { stem: string; branch: string };
+  hour: { stem: string; branch: string };
+};
+
+type SipsinCounts = Record<string, number>;
+
+type SajuRelationsJson = {
+  stemRelations: Array<{
+    type: string;
+    pillars: [string, string];
+    desc: string;
+    stems: [string, string];
+  }>;
+  branchRelations: {
+    지장간: Record<string, string>;
+    방합: Record<string, string>;
+    삼합: Record<string, string>;
+    반합: Record<string, string>;
+    육합: Record<string, string>;
+    충: Record<string, string>;
+    형: Record<string, string>;
+    파: Record<string, string>;
+    해: Record<string, string>;
+    원진: Record<string, string>;
+    귀문: Record<string, string>;
+  };
+};
+
 export const users = pgTable(
   "users",
   {
@@ -76,11 +109,11 @@ export const sajuCharts = pgTable(
     hourStem: text("hour_stem"),
     hourBranch: text("hour_branch"),
     dayMaster: text("day_master").notNull(),
-    fiveElements: jsonb("five_elements").notNull(),
-    tenGods: jsonb("ten_gods").notNull(),
-    sipsinCounts: jsonb("sipsin_counts").notNull(),
-    relations: jsonb("relations").notNull(),
-    rawChart: jsonb("raw_chart").notNull(),
+    fiveElements: jsonb("five_elements").$type<FiveElements>().notNull(),
+    tenGods: jsonb("ten_gods").$type<TenGods>().notNull(),
+    sipsinCounts: jsonb("sipsin_counts").$type<SipsinCounts>().notNull(),
+    relations: jsonb("relations").$type<SajuRelationsJson>().notNull(),
+    rawChart: jsonb("raw_chart").$type<Record<string, unknown>>().notNull(),
     compactReading: text("compact_reading").notNull(),
     version: integer("version").notNull().default(1),
     computedAt: timestamp("computed_at", { withTimezone: true })
