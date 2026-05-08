@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { gql, useMutation, useQuery, useSubscription } from "urql";
+import { useMutation, useQuery, useSubscription } from "urql";
+import { graphql } from "@/gql";
+import type { MessageAddedSubscription } from "@/gql/graphql";
 
 const ROOM_ID = "1e64e90b-5aa9-4575-b4c1-168b4b5431b5";
 
-const ME_QUERY = gql`
+const ME_QUERY = graphql(`
   query Me {
     me {
       id
@@ -13,9 +15,9 @@ const ME_QUERY = gql`
       email
     }
   }
-`;
+`);
 
-const CHAT_ROOM_QUERY = gql`
+const CHAT_ROOM_QUERY = graphql(`
   query ChatRoom($id: ID!) {
     chatRoom(id: $id) {
       id
@@ -31,9 +33,9 @@ const CHAT_ROOM_QUERY = gql`
       }
     }
   }
-`;
+`);
 
-const SEND_MESSAGE = gql`
+const SEND_MESSAGE = graphql(`
   mutation SendMessage($roomId: ID!, $body: String!) {
     sendMessage(roomId: $roomId, body: $body) {
       id
@@ -41,9 +43,9 @@ const SEND_MESSAGE = gql`
       createdAt
     }
   }
-`;
+`);
 
-const MESSAGE_ADDED_SUB = gql`
+const MESSAGE_ADDED_SUB = graphql(`
   subscription MessageAdded($roomId: ID!) {
     messageAdded(roomId: $roomId) {
       id
@@ -56,15 +58,9 @@ const MESSAGE_ADDED_SUB = gql`
       }
     }
   }
-`;
+`);
 
-type LiveMessage = {
-  id: string;
-  body: string;
-  type: string;
-  createdAt: string;
-  sender: { id: string; name: string };
-};
+type LiveMessage = MessageAddedSubscription["messageAdded"];
 
 export function DevPlayground({ userId }: { userId: string }) {
   const [meRes] = useQuery({ query: ME_QUERY });
@@ -81,13 +77,12 @@ export function DevPlayground({ userId }: { userId: string }) {
       query: MESSAGE_ADDED_SUB,
       variables: { roomId: ROOM_ID },
     },
-    (_, data: { messageAdded: LiveMessage }) => {
+    (_prev, next) => {
+      const incoming = next.messageAdded;
       setLiveMessages((prev) =>
-        prev.some((m) => m.id === data.messageAdded.id)
-          ? prev
-          : [...prev, data.messageAdded],
+        prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming],
       );
-      return data;
+      return next;
     },
   );
 
@@ -111,7 +106,7 @@ export function DevPlayground({ userId }: { userId: string }) {
         <h2 style={S.h2}>1. me Query (HTTP)</h2>
         {meRes.fetching && <p>loading...</p>}
         {meRes.error && <p style={S.err}>{meRes.error.message}</p>}
-        {meRes.data && (
+        {meRes.data?.me && (
           <pre style={S.pre}>{JSON.stringify(meRes.data.me, null, 2)}</pre>
         )}
       </section>
@@ -127,9 +122,9 @@ export function DevPlayground({ userId }: { userId: string }) {
         )}
         {roomRes.data?.chatRoom && (
           <ul style={{ paddingLeft: 16 }}>
-            {roomRes.data.chatRoom.messages.map((m: LiveMessage) => (
+            {roomRes.data.chatRoom.messages.map((m) => (
               <li key={m.id}>
-                <b>{m.sender.name}</b> [{m.type}]: {m.body}
+                <b>{m.sender?.name ?? "(unknown)"}</b> [{m.type}]: {m.body}
               </li>
             ))}
           </ul>
@@ -162,8 +157,10 @@ export function DevPlayground({ userId }: { userId: string }) {
           <ul style={{ paddingLeft: 16 }}>
             {liveMessages.map((m) => (
               <li key={m.id}>
-                <b>{m.sender.name}</b> [{m.type}]: {m.body}{" "}
-                <span style={{ fontSize: 11, color: "#888" }}>{m.createdAt}</span>
+                <b>{m.sender?.name ?? "(unknown)"}</b> [{m.type}]: {m.body}{" "}
+                <span style={{ fontSize: 11, color: "#888" }}>
+                  {String(m.createdAt)}
+                </span>
               </li>
             ))}
           </ul>

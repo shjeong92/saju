@@ -19,6 +19,9 @@ out/
 # Tooling artifacts
 .playwright-mcp/
 
+# GraphQL Codegen 산출물 (frontend/src/gql/)
+frontend/src/gql/
+
 # Env files
 .env
 .env.local
