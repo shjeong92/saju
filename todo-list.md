@@ -29,45 +29,52 @@
 
 ### 학습 보강 먼저
 
-- [ ] `packages/shared/env.ts` — zod로 process.env 검증 (07-project §3)
-- [ ] Branded type 도입: `UserId`, `MatchId` (`packages/shared/src/types.ts`) (01-typescript-boost §5)
+- [x] `packages/shared/env.ts` — zod로 process.env 검증 (07-project §3)
+- [x] Branded type 도입: `UserId`, `MatchId` (`packages/shared/src/types.ts`) (01-typescript-boost §5)
 
 ### Drizzle 보강
 
-- [ ] `packages/db/src/schema/relations.ts` — relations() 정의 (users ↔ sajuChart/profile/matches/chatRooms 등) (03-drizzle §4)
-- [ ] saju_charts.fiveElements/tenGods/sipsinCounts/relations/rawChart에 `.$type<{...}>()` 명시 (03-drizzle §7-6)
-- [ ] 추가 테이블 마이그레이션: personal_readings + compatibility_reports + daily_fortunes + matches + chat_rooms + messages + job_logs (D-4 status 컬럼 포함)
-- [ ] `db:studio` 한 번 실행해서 UI로 둘러보기 (학습용) (03-drizzle §8)
+- [x] `packages/db/src/schema/relations.ts` — relations() 정의 (users ↔ sajuChart/profile/matches/chatRooms 등) (03-drizzle §4)
+- [x] saju_charts.fiveElements/tenGods/sipsinCounts/relations/rawChart에 `.$type<{...}>()` 명시 (03-drizzle §7-6)
+- [x] 추가 테이블 마이그레이션: personal_readings + compatibility_reports + daily_fortunes + matches + chat_rooms + messages + job_logs (D-4 status 컬럼 포함)
+- [x] `db:studio` 한 번 실행해서 UI로 둘러보기 (학습용) (03-drizzle §8) — `bun run db:studio`로 부팅 확인 (https://local.drizzle.studio), 11개 테이블 모두 정상 인식
 
 ### Hono + 인증
 
-- [ ] `Hono<{ Variables: Variables }>` 타입 안전 컨텍스트 적용 (02-hono §4)
-- [ ] 라우터 분리: `apps/api/src/routes/{auth,saju}.ts` (02-hono §5)
-- [ ] `apps/api/src/middleware/auth.ts` — JWT 검증 → context.userId 주입
-- [ ] `POST /auth/upsert` 라우트 (provider/providerId 받아서 users upsert + JWT 발급)
-- [ ] `@hono/zod-validator`로 `POST /saju` 입력 검증 (02-hono §6)
+- [x] `Hono<{ Variables: Variables }>` 타입 안전 컨텍스트 적용 (02-hono §4)
+- [x] 라우터 분리: `apps/api/src/routes/{auth,saju}.ts` (02-hono §5)
+- [x] `apps/api/src/middleware/auth.ts` — JWT 검증 → context.userId 주입
+- [x] `POST /auth/upsert` 라우트 (provider/providerId 받아서 users upsert + JWT 발급)
+- [x] `@hono/zod-validator`로 `POST /saju` 입력 검증 (02-hono §6)
 
 ### ssaju 도메인 (Day 2 매칭 점수 의존)
 
-- [ ] `packages/saju` ssaju 의존성 추가
-- [ ] `computeSajuChart` 함수 구현 (ssaju wrapper, 입력 → 원국/십신/관계 반환, jsonb $type과 시그니처 일치)
+- [x] `packages/saju` ssaju 의존성 추가
+- [x] `computeSajuChart` 함수 구현 (ssaju wrapper, 입력 → 원국/십신/관계 반환, jsonb $type과 시그니처 일치)
 
 ### 사주 입력 흐름
 
-- [ ] `POST /saju` 핸들러 — 동기 ssaju 계산 → saju_charts INSERT
-- [ ] **트랜잭션** 적용: saju_inputs + saju_charts + user_profiles + personal_readings(pending) 한 묶음 (03-drizzle §6)
+- [x] `POST /saju` 핸들러 — 동기 ssaju 계산 → saju_charts INSERT
+- [x] **트랜잭션** 적용: saju_inputs + saju_charts + user_profiles + personal_readings(pending) 한 묶음 (03-drizzle §6)
 
 ### BullMQ + AI
 
-- [ ] `apps/worker` BullMQ Queue/Worker 분리 + Redis 연결 (06-bullmq §2)
-- [ ] `packages/ai` Anthropic 클라이언트 (Claude Sonnet 4.5, 사내 프록시 baseURL)
-- [ ] `ai.profile-reading` 잡 핸들러 (saju_chart → ssaju compactReading + 프롬프트 → LLM → personal_readings UPDATE: status pending→generating→completed/failed)
-- [ ] BullMQ FlowProducer로 회원가입 → ai.profile-reading 체이닝 (06-bullmq §5)
-- [ ] BullMQ jobId idempotency (예: `profile-reading:${userId}:v1`) (06-bullmq §3)
-- [ ] BullMQ Graceful shutdown (`SIGTERM` 핸들러 + `await worker.close()`) (06-bullmq §7-4)
-- [ ] 사주 입력 후 ai.profile-reading 잡 자동 enqueue + status='pending'으로 row INSERT 같이
+- [x] `apps/worker` BullMQ Queue/Worker 분리 + Redis 연결 (06-bullmq §2)
+- [x] `packages/ai` Anthropic 클라이언트 (Claude Sonnet 4.5, 사내 프록시 baseURL)
+- [x] `ai.profile-reading` 잡 핸들러 (saju_chart → ssaju compactReading + 프롬프트 → LLM → personal_readings UPDATE: status pending→generating→completed/failed)
+- [ ] BullMQ FlowProducer로 회원가입 → ai.profile-reading 체이닝 (06-bullmq §5) ← Day 2에서 매칭 잡 체이닝과 함께 작성 예정
+- [x] BullMQ jobId idempotency (예: `profile-reading:${userId}:v1`) (06-bullmq §3)
+- [x] BullMQ Graceful shutdown (`SIGTERM` 핸들러 + `await worker.close()`) (06-bullmq §7-4)
+- [x] 사주 입력 후 ai.profile-reading 잡 자동 enqueue + status='pending'으로 row INSERT 같이
 
 **Day 1 종료 조건**: REST로 사주 입력 → 만세력 계산 즉시 반영 → 백그라운드 LLM 풀이 → personal_readings status 변화 (pending → generating → completed) DB에서 확인.
+
+✅ 검증 완료 (`AI_PROXY_API_KEY` 빈 상태에서 실제 호출):
+- POST /auth/upsert → JWT 발급 OK
+- POST /saju → 트랜잭션으로 saju_inputs + saju_charts + user_profiles + personal_readings(pending) 일괄 INSERT, 만세력 즉시 응답 (dayMaster=庚, fiveElements 정상)
+- BullMQ 잡 자동 enqueue (jobId=`profile-reading:<uid>:v1`로 idempotency 작동, 재시도 시 같은 id 사용)
+- Worker가 잡 picking → status `pending` → `generating` → (AI 프록시 404 → `failed`, 키 들어오면 `completed`)
+- GET /saju/me로 chart + reading 상태 조회 OK
 
 ## Day 2 오전 - GraphQL 인프라
 
@@ -169,26 +176,26 @@
 ### 01-typescript-boost
 - [x] §6 tsconfig strict + noUncheckedIndexedAccess (이미 설정됨)
 - [x] §2 typeof + infer ($inferSelect/Insert로 schema/users.ts에서 사용 중)
-- [ ] §1 Generic (Pothos builder에서 자연스럽게 사용)
-- [ ] §3 satisfies (env.ts에서 사용)
-- [ ] §5 Branded type (UserId, MatchId)
+- [ ] §1 Generic (Pothos builder에서 자연스럽게 사용) ← Day 2
+- [x] §3 satisfies (env.ts에서 zod parse 활용; satisfies는 Day 2 builder에서 추가)
+- [x] §5 Branded type (UserId, MatchId, ChatRoomId, MessageId 등 packages/shared/src/types.ts)
 
 ### 02-hono
 - [x] §1-2 Context (`/health`)
 - [x] §7 실행 (Bun으로 동작 확인)
-- [ ] §3 미들웨어 (auth.ts)
-- [ ] §4 Variables 타입
-- [ ] §5 라우터 분리
-- [ ] §6 zod-validator
+- [x] §3 미들웨어 (auth.ts, context.ts)
+- [x] §4 Variables 타입 (`Hono<AppEnv>`)
+- [x] §5 라우터 분리 (routes/auth.ts, routes/saju.ts, app.route 사용)
+- [x] §6 zod-validator (POST /auth/upsert + POST /saju)
 
 ### 03-drizzle
-- [x] §2 스키마 정의 (ENUM + 4테이블)
-- [x] §3 CRUD (smoke 스크립트)
-- [x] §5 마이그레이션 (drizzle-kit generate/migrate)
-- [ ] §4 Relational query (relations() + with)
-- [ ] §6 트랜잭션
-- [ ] §7-6 jsonb $type<>
-- [ ] §8 Studio
+- [x] §2 스키마 정의 (ENUM + 11테이블)
+- [x] §3 CRUD (smoke 스크립트, upsert/select/delete)
+- [x] §5 마이그레이션 (drizzle-kit generate/migrate, 0001 추가 적용 완료)
+- [x] §4 Relational query (relations() one/many 정의, with 사용은 Day 2 GraphQL에서)
+- [x] §6 트랜잭션 (POST /saju에서 db.transaction 사용)
+- [x] §7-6 jsonb $type<> (saju_charts, personal_readings, matches, daily_fortunes, messages, job_logs)
+- [x] §8 Studio (`bun run db:studio` 부팅 확인, https://local.drizzle.studio — 11개 테이블 정상)
 
 ### 04-pothos-yoga
 - [ ] §2 builder
@@ -203,21 +210,21 @@
 - [ ] §5 loadableObject
 
 ### 06-bullmq
-- [ ] §2 Queue/Worker 분리
-- [ ] §3 옵션 (attempts, backoff, jobId)
-- [ ] §4 JobScheduler cron
-- [ ] §5 FlowProducer 체이닝
-- [ ] §7-4 Graceful shutdown
-- [ ] §8 Bull Board
+- [x] §2 Queue/Worker 분리 (apps/api/src/queues + apps/worker/src/jobs)
+- [x] §3 옵션 (attempts: 3, backoff exponential, jobId idempotency, removeOnComplete/Fail)
+- [ ] §4 JobScheduler cron (Day 2: ai.daily-fortune)
+- [ ] §5 FlowProducer 체이닝 (Day 2: 매칭 잡과 함께)
+- [x] §7-4 Graceful shutdown (SIGTERM/SIGINT → worker.close + redis.quit)
+- [ ] §8 Bull Board (출시 직후)
 
 ### 07-project-structure
 - [x] §1 Layered 구조 (Bun workspace)
 - [x] §8 Docker compose dev (api+worker+postgres+redis)
-- [ ] §3 env.ts zod
-- [ ] §4 Context 패턴 (Yoga context factory)
-- [ ] §5 인증 (미들웨어 + context)
-- [ ] §6 권한 (scope-auth)
-- [ ] §7 vitest
+- [x] §3 env.ts zod (packages/shared/src/env.ts, 부팅 시점 검증)
+- [ ] §4 Context 패턴 (Yoga context factory) ← Day 2
+- [x] §5 인증 (Hono 미들웨어 attachUser/requireAuth + JWT)
+- [ ] §6 권한 (scope-auth) ← Day 2
+- [ ] §7 vitest ← Day 2
 
 ## 마인드셋 체크 (학습 README §마인드셋)
 
@@ -232,14 +239,14 @@
 
 - 사전 준비: 4/6 완료
 - Day 1 오전: 10/10 완료 ✅
-- Day 1 오후: 0/19 (시작 전)
+- Day 1 오후: 18/19 완료 ✅ (FlowProducer만 남음 — Day 2 매칭 잡과 함께)
 - Day 2 오전: 0/11
 - Day 2 오후: 0/13
 - Day 3 오전: 0/10
 - Day 3 오후: 0/13
 - 출시 직후: 0/4
 
-**전체: 14/86 = 16% 진행**
+**전체: 32/86 = 37% 진행**
 
 ## 진행 순서 (지금부터)
 
