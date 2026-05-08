@@ -1,4 +1,5 @@
 import { builder } from "../builder.ts";
+import { ChatRoomType } from "../types/chatRoom.ts";
 import { DailyFortuneType } from "../types/dailyFortune.ts";
 import { MatchType } from "../types/match.ts";
 import { PersonalReadingType } from "../types/personalReading.ts";
@@ -88,6 +89,43 @@ builder.queryFields((t) => ({
     resolve: async (query, _root, { id }, ctx) => {
       if (!ctx.userId) return null;
       const row = await ctx.db.query.matches.findFirst(
+        query({
+          where: {
+            id: id as string,
+            OR: [{ userAId: ctx.userId }, { userBId: ctx.userId }],
+          },
+        }),
+      );
+      return row ?? null;
+    },
+  }),
+
+  myChatRooms: t.drizzleField({
+    type: [ChatRoomType],
+    authScopes: { authenticated: true },
+    resolve: async (query, _root, _args, ctx) => {
+      if (!ctx.userId) return [];
+      return await ctx.db.query.chatRooms.findMany(
+        query({
+          where: {
+            OR: [{ userAId: ctx.userId }, { userBId: ctx.userId }],
+          },
+          orderBy: { lastMessageAt: "desc" },
+        }),
+      );
+    },
+  }),
+
+  chatRoom: t.drizzleField({
+    type: ChatRoomType,
+    nullable: true,
+    args: {
+      id: t.arg.id({ required: true }),
+    },
+    authScopes: { authenticated: true },
+    resolve: async (query, _root, { id }, ctx) => {
+      if (!ctx.userId) return null;
+      const row = await ctx.db.query.chatRooms.findFirst(
         query({
           where: {
             id: id as string,

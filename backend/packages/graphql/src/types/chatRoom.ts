@@ -1,3 +1,4 @@
+import "./message.ts";
 import { builder } from "../builder.ts";
 import { LoadableUserType } from "./loadableUser.ts";
 
@@ -28,6 +29,12 @@ export const ChatRoomType = builder.drizzleObject("chatRooms", {
         if (!myRead) return true;
         return lastMsg > myRead;
       },
+    }),
+    messages: t.relation("messages", {
+      query: () => ({
+        orderBy: { createdAt: "asc" },
+        limit: 100,
+      }),
     }),
   }),
 });

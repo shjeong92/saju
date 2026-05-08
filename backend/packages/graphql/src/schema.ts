@@ -11,7 +11,9 @@ import "./types/loadableUser.ts";
 import "./types/match.ts";
 import "./types/compatibilityReport.ts";
 import "./types/chatRoom.ts";
+import "./types/message.ts";
 import "./resolvers/query.ts";
 import "./resolvers/mutation.ts";
+import "./resolvers/subscription.ts";
 
 export const schema = builder.toSchema();
