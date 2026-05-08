@@ -8,6 +8,9 @@ import "./types/sajuChart.ts";
 import "./types/personalReading.ts";
 import "./types/dailyFortune.ts";
 import "./types/loadableUser.ts";
+import "./types/match.ts";
+import "./types/compatibilityReport.ts";
+import "./types/chatRoom.ts";
 import "./resolvers/query.ts";
 import "./resolvers/mutation.ts";
 

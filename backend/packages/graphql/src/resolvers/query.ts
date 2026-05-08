@@ -1,5 +1,6 @@
 import { builder } from "../builder.ts";
 import { DailyFortuneType } from "../types/dailyFortune.ts";
+import { MatchType } from "../types/match.ts";
 import { PersonalReadingType } from "../types/personalReading.ts";
 import { UserType } from "../types/user.ts";
 
@@ -18,11 +19,12 @@ builder.queryFields((t) => ({
     type: UserType,
     nullable: true,
     authScopes: { authenticated: true },
-    resolve: (query, _root, _args, ctx) => {
+    resolve: async (query, _root, _args, ctx) => {
       if (!ctx.userId) return null;
-      return ctx.db.query.users.findFirst(
+      const row = await ctx.db.query.users.findFirst(
         query({ where: { id: ctx.userId } }),
-      ) as ReturnType<typeof ctx.db.query.users.findFirst>;
+      );
+      return row ?? null;
     },
   }),
 
@@ -30,14 +32,15 @@ builder.queryFields((t) => ({
     type: PersonalReadingType,
     nullable: true,
     authScopes: { authenticated: true },
-    resolve: (query, _root, _args, ctx) => {
+    resolve: async (query, _root, _args, ctx) => {
       if (!ctx.userId) return null;
-      return ctx.db.query.personalReadings.findFirst(
+      const row = await ctx.db.query.personalReadings.findFirst(
         query({
           where: { userId: ctx.userId },
           orderBy: { createdAt: "desc" },
         }),
-      ) as ReturnType<typeof ctx.db.query.personalReadings.findFirst>;
+      );
+      return row ?? null;
     },
   }),
 
@@ -45,16 +48,54 @@ builder.queryFields((t) => ({
     type: DailyFortuneType,
     nullable: true,
     authScopes: { authenticated: true },
-    resolve: (query, _root, _args, ctx) => {
+    resolve: async (query, _root, _args, ctx) => {
       if (!ctx.userId) return null;
-      return ctx.db.query.dailyFortunes.findFirst(
+      const row = await ctx.db.query.dailyFortunes.findFirst(
         query({
           where: {
             userId: ctx.userId,
             forDate: TODAY(),
           },
         }),
-      ) as ReturnType<typeof ctx.db.query.dailyFortunes.findFirst>;
+      );
+      return row ?? null;
+    },
+  }),
+
+  matches: t.drizzleField({
+    type: [MatchType],
+    authScopes: { authenticated: true },
+    resolve: async (query, _root, _args, ctx) => {
+      if (!ctx.userId) return [];
+      return await ctx.db.query.matches.findMany(
+        query({
+          where: {
+            OR: [{ userAId: ctx.userId }, { userBId: ctx.userId }],
+          },
+          orderBy: { score: "desc" },
+        }),
+      );
+    },
+  }),
+
+  match: t.drizzleField({
+    type: MatchType,
+    nullable: true,
+    args: {
+      id: t.arg.id({ required: true }),
+    },
+    authScopes: { authenticated: true },
+    resolve: async (query, _root, { id }, ctx) => {
+      if (!ctx.userId) return null;
+      const row = await ctx.db.query.matches.findFirst(
+        query({
+          where: {
+            id: id as string,
+            OR: [{ userAId: ctx.userId }, { userBId: ctx.userId }],
+          },
+        }),
+      );
+      return row ?? null;
     },
   }),
 
