@@ -22,8 +22,8 @@ docker compose -f infra/docker-compose.dev.yml down -v
 
 ## 접속 정보
 
-- Postgres: `postgres://saju:saju@localhost:5432/saju`
-- Redis: `redis://localhost:6379`
+- Postgres: `postgres://saju:saju@localhost:5532/saju` (호스트 포트 5532, 기본 5432 충돌 회피)
+- Redis: `redis://localhost:6479` (호스트 포트 6479, 기본 6379 충돌 회피)
 
 ## OCI 배포 (Day 3)
 
