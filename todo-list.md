@@ -100,32 +100,44 @@
 
 ### 매칭 도메인
 
-- [ ] `packages/saju/relations.ts` — 천간 합/충, 지지 6합/3합/방합/충/형/파/해 테이블
-- [ ] `packages/saju/tenGods.ts` — 십신 매핑 테이블 + 양방향 점수
-- [ ] `packages/saju/compatibility.ts` — 점수 산출 4요소 (D-2: 일간합 25 + 오행균형 25 + 십신시너지 25 + 지지관계 25)
+- [x] `packages/saju/relations.ts` — 천간 합/충, 지지 6합/3합/방합/충/형/파/해 테이블
+- [x] `packages/saju/tenGods.ts` — 십신 매핑 테이블 + 양방향 점수
+- [x] `packages/saju/compatibility.ts` — 점수 산출 4요소 (일간합 25 + 오행균형 25 + 십신시너지 25 + 지지관계 25)
 
 ### 테스트
 
-- [ ] vitest 셋업 (07 §7)
-- [ ] 단위 테스트: 알려진 두 사주 → 점수 검증
-- [ ] vitest GraphQL fetch 테스트 1개 (`yoga.fetch(...)` 패턴)
+- [x] ~~vitest~~ → `bun:test` 사용 (워크스페이스 일관성, 추가 의존성 0)
+- [x] 단위 테스트: relations(11) + tenGods(8) + compatibility(8) = 27 케이스 pass
+- [x] GraphQL schema 테스트 1개 (`graphql.execute()` 패턴 — Yoga 없이 직접 schema 실행, 5 케이스 pass)
 
 ### 잡
 
-- [ ] `match.curate` 잡 (사용자 N명 → 페어별 점수 → 상위 K개 matches INSERT, compatibility_reports row도 status='pending'으로 같이 INSERT)
-- [ ] `ai.compatibility` 잡 핸들러 (LLM 호출 → compatibility_reports UPDATE)
-- [ ] `ai.daily-fortune` 잡 핸들러
-- [ ] **JobScheduler cron** `ai.daily-fortune` 매일 04:00 (06-bullmq §4)
-- [ ] 첫 가입자용 즉시 daily_fortune 생성 잡 트리거 (사주 입력 직후)
+- [x] `match.curate` 잡 (후보 사용자 N명 → 페어별 점수 → matches INSERT, compatibility_reports row도 status='pending'으로 같이 INSERT)
+- [x] `ai.compatibility` 잡 핸들러 (LLM 호출 → compatibility_reports UPDATE)
+- [x] `ai.daily-fortune` 잡 핸들러
+- [x] **JobScheduler cron** `daily-fortune-tick` 매일 04:00 KST (Asia/Seoul tz) — tick이 모든 active 사용자에 daily-fortune 잡 fanout
+- [x] 첫 가입자용 즉시 daily_fortune 생성 잡 트리거 (사주 입력 직후 트랜잭션 안에서 row INSERT + 큐 enqueue)
 
 ### GraphQL 매칭
 
-- [ ] Match / CompatibilityReport / ChatRoom GraphQL 타입
-- [ ] Query.matches + Query.match(id) 리졸버 (userA/userB 방향 처리)
-- [ ] Mutation.likeMatch + Mutation.dismissMatch 리졸버 (양쪽 like 시 chat_rooms 자동 생성)
-- [ ] Pothos `scope-auth` 플러그인으로 매칭 본인만 조회/변경 가능 (07 §6)
+- [x] Match / CompatibilityReport / ChatRoom GraphQL 타입 (+ ScoreBreakdown / CompatibilitySummary 보조 objectRef)
+- [x] Query.matches + Query.match(id) 리졸버 (userA/userB 방향은 Match.partner/iLiked/theyLiked 필드로 추상화)
+- [x] Mutation.likeMatch + Mutation.dismissMatch 리졸버 (양쪽 like 시 chat_rooms onConflictDoNothing INSERT)
+- [x] Pothos `scope-auth` 플러그인으로 매칭 본인만 조회/변경 가능 (Query.match는 where에 OR 필터로 자동 권한 체크)
 
 **Day 2 종료 조건**: 더미 유저 6명 시드 → match.curate 트리거 → matches 생성 → AI 풀이 비동기 채워짐 → GraphQL로 매칭+점수+풀이 조회. 일일 운세 1건 생성 확인.
+
+✅ 검증 완료 (Alice + Bob e2e):
+- POST /auth/upsert × 2 → JWT 발급
+- POST /saju × 2 → 트랜잭션 + 3종 잡(profile-reading/daily-fortune/match.curate) 자동 enqueue
+- Worker 3큐(ai/match/cron) 정상 부팅, `[worker] ready, queues=ai,match,cron`
+- match.curate 잡: alice 입장 5 candidates → 5 matches INSERT + 5 ai.compatibility 체이닝
+- Alice ↔ Bob 매치 score=71, breakdown notes: `A→B:정재 / B→A:정관`, `일지hae(亥申)`, `월지yukhap(巳申)`
+- ai.compatibility 잡: 한국어 풀이 + 데이트 코스 4개 + 대화 주제 5개 LLM 응답 정상 수신
+- ai.daily-fortune 잡: alice/bob 모두 score=good, sections 채워짐
+- GraphQL `{ matches { id score partner { name } breakdown { notes } iLiked theyLiked } }` 정상
+- `mutation likeMatch` Alice → status liked, Bob → status matched + chat_rooms 자동 생성 확인
+- 잡은 진짜 버그 1건: BullMQ 5.x jobId 콜론 포함 시 정확히 3토큰 요구 → match-curate/compatibility jobId에 :v1 패딩으로 해결
 
 ## Day 3 오전 - 채팅 (WebSocket + Subscription)
 
@@ -216,11 +228,11 @@
 - [x] §5 loadableObject (LoadableUser, SajuChart.owner에서 사용)
 
 ### 06-bullmq
-- [x] §2 Queue/Worker 분리 (apps/api/src/queues + apps/worker/src/jobs)
-- [x] §3 옵션 (attempts: 3, backoff exponential, jobId idempotency, removeOnComplete/Fail)
-- [ ] §4 JobScheduler cron (Day 2: ai.daily-fortune)
-- [ ] §5 FlowProducer 체이닝 (Day 2: 매칭 잡과 함께)
-- [x] §7-4 Graceful shutdown (SIGTERM/SIGINT → worker.close + redis.quit)
+- [x] §2 Queue/Worker 분리 (apps/api/src/queues + apps/worker/src/jobs, ai/match/cron 3큐)
+- [x] §3 옵션 (attempts: 3, backoff exponential, jobId idempotency, removeOnComplete/Fail) + jobId 3토큰 규칙(BullMQ 5.x)
+- [x] §4 JobScheduler cron (`upsertJobScheduler` daily-fortune-tick 04:00 KST)
+- [ ] §5 FlowProducer 체이닝 — match.curate → ai.compatibility 체이닝은 **콜백 enqueue 패턴**으로 대체 (FlowProducer는 부모-자식 관계가 강제되어 단순 트리거에 과함, 출시 후 재평가)
+- [x] §7-4 Graceful shutdown (SIGTERM/SIGINT → 3 worker.close + 2 queue.close + redis.quit)
 - [ ] §8 Bull Board (출시 직후)
 
 ### 07-project-structure
@@ -229,44 +241,43 @@
 - [x] §3 env.ts zod (packages/shared/src/env.ts, 부팅 시점 검증)
 - [x] §4 Context 패턴 (createGraphQLContext factory, JWT/BullMQ 콜백 주입)
 - [x] §5 인증 (Hono 미들웨어 attachUser/requireAuth + JWT)
-- [x] §6 권한 (scope-auth: authenticated scope, Query.me/myReading/myDailyFortune + Mutation 양쪽 적용)
-- [ ] §7 vitest ← Day 2 오후
+- [x] §6 권한 (scope-auth: authenticated scope, Query.me/myReading/myDailyFortune/matches/match + Mutation 5종 적용)
+- [x] §7 ~~vitest~~ → bun:test (saju 27 + graphql 5 = 32 케이스 pass)
 
 ## 마인드셋 체크 (학습 README §마인드셋)
 
 코드 작성 중에 항상 체크.
 
-- [ ] **명시성**: `as any` 0건, 타입 회피 0건
-- [ ] **DataLoader**: 모든 GraphQL relation 필드가 loader 경유
-- [ ] **워커 분리**: API 프로세스에서 잡 처리 안 함, 항상 Queue.add → 별도 worker
-- [ ] **env 검증**: 부팅 시점 process.env 검증, 통과 못 하면 즉시 죽음
+- [x] **명시성**: `as any` 0건, 타입 회피 0건 (`as ReturnType<...>` 패턴도 await + null check로 정리)
+- [x] **DataLoader**: GraphQL relation 필드 loader 경유 (LoadableUser + matchesByUserId + drizzleField 자동 batching)
+- [x] **워커 분리**: API 프로세스에서 잡 처리 0건, 항상 Queue.add → 별도 worker (3큐: ai/match/cron)
+- [x] **env 검증**: 부팅 시점 process.env zod 검증, 통과 못 하면 즉시 죽음 (api + worker 양쪽)
 
 ## 진행 통계 (현재 시점)
 
 - 사전 준비: 4/6 완료
 - Day 1 오전: 10/10 완료 ✅
-- Day 1 오후: 18/19 완료 ✅ (FlowProducer만 남음 — Day 2 매칭 잡과 함께)
+- Day 1 오후: 18/19 완료 ✅ (FlowProducer는 콜백 enqueue로 대체)
 - Day 2 오전: 11/11 완료 ✅
-- Day 2 오후: 0/13
+- Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 0/10
 - Day 3 오후: 0/13
 - 출시 직후: 0/4
 
-**전체: 43/86 = 50% 진행**
+**전체: 56/86 = 65% 진행**
 
-> 📝 **다음 세션 시작점**: Day 2 오후 — 매칭 도메인 (`packages/saju/relations.ts`, `tenGods.ts`, `compatibility.ts`) 부터 시작
-> 직전 커밋: `0ba1e5c feat(api): Hono /graphql 라우트에 Yoga 마운트`
+> 📝 **다음 세션 시작점**: 일정 재설계 결정 필요. 옵션:
+> - **A**: 사주 입력 페이지 1장부터 화면 붙이기 (백엔드 검증된 김에 인프라 검증)
+> - **B**: Day 3 오전 채팅 WS + Subscription 구현 (todo 원안)
+> - **C**: 더미 시드 스크립트 → 매칭 시나리오 다양하게 e2e 검증 후 진입
+>
+> 직전 커밋: `a4f5885 fix(deps): drizzle-orm 1.0.0-rc.2 강제 (plugin-drizzle 0.45.2 dedupe)`
 
-## 진행 순서 (지금부터)
+## Day 2 오후 — 잡은 진짜 버그 회고
 
-1. env.ts (30분) — 학습 보강 첫 단추
-2. Branded type (15분)
-3. Drizzle relations + jsonb $type + 추가 테이블 마이그레이션 (1.5h)
-4. Hono Variables + 라우터 분리 + 미들웨어 + zod-validator (1h)
-5. Auth /upsert + JWT (1h)
-6. ssaju wrapper + computeSajuChart (1h)
-7. 사주 입력 트랜잭션 + REST (1h)
-8. BullMQ Queue/Worker + AI 클라이언트 + ai.profile-reading 잡 + Flow + idempotency + graceful shutdown (2.5h)
-9. → Day 1 종료 조건 검증
+typecheck/단위테스트 통과만 보고 끝낸 게 아니라 e2e 시연 한 번에 다음 4건이 새로 드러남:
 
-이후 Day 2/3은 같은 파일에서 이어서 진행.
+1. `@pothos/plugin-drizzle@0.17.4`이 `drizzle-orm@0.45.2`를 sub-deps로 끌어와 동일 이름 타입 충돌 → `package.json` overrides로 1.0.0-rc.2 단일화
+2. drizzle 1.0의 RQB는 `where` 콜백 형태(`(t, ops) => ne(t.id, x)`) 폐기, 객체 패턴(`{ NOT: { id: x } }`)만 지원
+3. drizzleField resolve의 `as ReturnType<...>` 캐스팅이 exactOptionalPropertyTypes와 충돌 → `await + null check` 패턴으로 통일
+4. **BullMQ 5.x: jobId에 콜론 포함 시 정확히 3토큰만 허용** (e2e 시연 안 했으면 못 잡았을 함정 — `match-curate:<uid>` → `match-curate:<uid>:v1`)
