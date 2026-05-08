@@ -16,7 +16,7 @@
     "@saju/saju": "workspace:*",
     "@saju/shared": "workspace:*",
     "bullmq": "^5.76.6",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "1.0.0-rc.2",
     "graphql-yoga": "^5.10.4",
     "hono": "^4.6.13",
     "ioredis": "^5.10.1",

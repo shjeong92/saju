@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { schema } from "@saju/db";
 import { computeSajuChart } from "@saju/saju";
 import { Hono } from "hono";
@@ -167,10 +167,10 @@ export const sajuRoutes = new Hono<AppEnv>()
     const db = c.get("db");
 
     const chart = await db.query.sajuCharts.findFirst({
-      where: eq(schema.sajuCharts.userId, user.userId),
+      where: { userId: user.userId },
     });
     const reading = await db.query.personalReadings.findFirst({
-      where: eq(schema.personalReadings.userId, user.userId),
+      where: { userId: user.userId },
     });
 
     return c.json({ chart: chart ?? null, reading: reading ?? null });

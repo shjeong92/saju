@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import { chatRooms, messages } from "./chat.ts";
 import { matches } from "./matches.ts";
 import {
@@ -8,122 +8,150 @@ import {
 } from "./readings.ts";
 import { sajuCharts, sajuInputs, userProfiles, users } from "./users.ts";
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  sajuInput: one(sajuInputs, {
-    fields: [users.id],
-    references: [sajuInputs.userId],
-  }),
-  sajuChart: one(sajuCharts, {
-    fields: [users.id],
-    references: [sajuCharts.userId],
-  }),
-  profile: one(userProfiles, {
-    fields: [users.id],
-    references: [userProfiles.userId],
-  }),
-  personalReadings: many(personalReadings),
-  dailyFortunes: many(dailyFortunes),
-  matchesAsA: many(matches, { relationName: "matchesA" }),
-  matchesAsB: many(matches, { relationName: "matchesB" }),
-  chatRoomsAsA: many(chatRooms, { relationName: "chatRoomsA" }),
-  chatRoomsAsB: many(chatRooms, { relationName: "chatRoomsB" }),
-  messagesSent: many(messages),
-}));
-
-export const sajuInputsRelations = relations(sajuInputs, ({ one }) => ({
-  user: one(users, {
-    fields: [sajuInputs.userId],
-    references: [users.id],
-  }),
-}));
-
-export const sajuChartsRelations = relations(sajuCharts, ({ one }) => ({
-  user: one(users, {
-    fields: [sajuCharts.userId],
-    references: [users.id],
-  }),
-}));
-
-export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
-  user: one(users, {
-    fields: [userProfiles.userId],
-    references: [users.id],
-  }),
-}));
-
-export const personalReadingsRelations = relations(
+const tables = {
+  users,
+  sajuInputs,
+  sajuCharts,
+  userProfiles,
   personalReadings,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [personalReadings.userId],
-      references: [users.id],
-    }),
-  }),
-);
-
-export const dailyFortunesRelations = relations(dailyFortunes, ({ one }) => ({
-  user: one(users, {
-    fields: [dailyFortunes.userId],
-    references: [users.id],
-  }),
-}));
-
-export const matchesRelations = relations(matches, ({ one }) => ({
-  userA: one(users, {
-    fields: [matches.userAId],
-    references: [users.id],
-    relationName: "matchesA",
-  }),
-  userB: one(users, {
-    fields: [matches.userBId],
-    references: [users.id],
-    relationName: "matchesB",
-  }),
-  chatRoom: one(chatRooms, {
-    fields: [matches.id],
-    references: [chatRooms.matchId],
-  }),
-  compatibilityReport: one(compatibilityReports, {
-    fields: [matches.id],
-    references: [compatibilityReports.matchId],
-  }),
-}));
-
-export const compatibilityReportsRelations = relations(
   compatibilityReports,
-  ({ one }) => ({
-    match: one(matches, {
-      fields: [compatibilityReports.matchId],
-      references: [matches.id],
+  dailyFortunes,
+  matches,
+  chatRooms,
+  messages,
+};
+
+export const relations = defineRelations(tables, (r) => ({
+  users: {
+    sajuInput: r.one.sajuInputs({
+      from: r.users.id,
+      to: r.sajuInputs.userId,
     }),
-  }),
-);
-
-export const chatRoomsRelations = relations(chatRooms, ({ one, many }) => ({
-  match: one(matches, {
-    fields: [chatRooms.matchId],
-    references: [matches.id],
-  }),
-  userA: one(users, {
-    fields: [chatRooms.userAId],
-    references: [users.id],
-    relationName: "chatRoomsA",
-  }),
-  userB: one(users, {
-    fields: [chatRooms.userBId],
-    references: [users.id],
-    relationName: "chatRoomsB",
-  }),
-  messages: many(messages),
-}));
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  room: one(chatRooms, {
-    fields: [messages.roomId],
-    references: [chatRooms.id],
-  }),
-  sender: one(users, {
-    fields: [messages.senderId],
-    references: [users.id],
-  }),
+    sajuChart: r.one.sajuCharts({
+      from: r.users.id,
+      to: r.sajuCharts.userId,
+    }),
+    profile: r.one.userProfiles({
+      from: r.users.id,
+      to: r.userProfiles.userId,
+    }),
+    personalReadings: r.many.personalReadings({
+      from: r.users.id,
+      to: r.personalReadings.userId,
+    }),
+    dailyFortunes: r.many.dailyFortunes({
+      from: r.users.id,
+      to: r.dailyFortunes.userId,
+    }),
+    matchesAsA: r.many.matches({
+      from: r.users.id,
+      to: r.matches.userAId,
+      alias: "matchesA",
+    }),
+    matchesAsB: r.many.matches({
+      from: r.users.id,
+      to: r.matches.userBId,
+      alias: "matchesB",
+    }),
+    chatRoomsAsA: r.many.chatRooms({
+      from: r.users.id,
+      to: r.chatRooms.userAId,
+      alias: "chatRoomsA",
+    }),
+    chatRoomsAsB: r.many.chatRooms({
+      from: r.users.id,
+      to: r.chatRooms.userBId,
+      alias: "chatRoomsB",
+    }),
+    messagesSent: r.many.messages({
+      from: r.users.id,
+      to: r.messages.senderId,
+    }),
+  },
+  sajuInputs: {
+    user: r.one.users({
+      from: r.sajuInputs.userId,
+      to: r.users.id,
+    }),
+  },
+  sajuCharts: {
+    user: r.one.users({
+      from: r.sajuCharts.userId,
+      to: r.users.id,
+    }),
+  },
+  userProfiles: {
+    user: r.one.users({
+      from: r.userProfiles.userId,
+      to: r.users.id,
+    }),
+  },
+  personalReadings: {
+    user: r.one.users({
+      from: r.personalReadings.userId,
+      to: r.users.id,
+    }),
+  },
+  dailyFortunes: {
+    user: r.one.users({
+      from: r.dailyFortunes.userId,
+      to: r.users.id,
+    }),
+  },
+  matches: {
+    userA: r.one.users({
+      from: r.matches.userAId,
+      to: r.users.id,
+      alias: "matchesA",
+    }),
+    userB: r.one.users({
+      from: r.matches.userBId,
+      to: r.users.id,
+      alias: "matchesB",
+    }),
+    chatRoom: r.one.chatRooms({
+      from: r.matches.id,
+      to: r.chatRooms.matchId,
+    }),
+    compatibilityReport: r.one.compatibilityReports({
+      from: r.matches.id,
+      to: r.compatibilityReports.matchId,
+    }),
+  },
+  compatibilityReports: {
+    match: r.one.matches({
+      from: r.compatibilityReports.matchId,
+      to: r.matches.id,
+    }),
+  },
+  chatRooms: {
+    match: r.one.matches({
+      from: r.chatRooms.matchId,
+      to: r.matches.id,
+    }),
+    userA: r.one.users({
+      from: r.chatRooms.userAId,
+      to: r.users.id,
+      alias: "chatRoomsA",
+    }),
+    userB: r.one.users({
+      from: r.chatRooms.userBId,
+      to: r.users.id,
+      alias: "chatRoomsB",
+    }),
+    messages: r.many.messages({
+      from: r.chatRooms.id,
+      to: r.messages.roomId,
+    }),
+  },
+  messages: {
+    room: r.one.chatRooms({
+      from: r.messages.roomId,
+      to: r.chatRooms.id,
+    }),
+    sender: r.one.users({
+      from: r.messages.senderId,
+      to: r.users.id,
+    }),
+  },
 }));

@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema/index.ts";
+import { relations } from "./schema/relations.ts";
 
-let cachedClient: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let cachedClient: ReturnType<typeof createDb> | null = null;
 
 function readDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
@@ -15,8 +16,8 @@ function readDatabaseUrl(): string {
 }
 
 export function createDb(databaseUrl: string = readDatabaseUrl()) {
-  const sql = postgres(databaseUrl, { max: 10 });
-  return drizzle(sql, { schema });
+  const client = postgres(databaseUrl, { max: 10 });
+  return drizzle({ client, relations });
 }
 
 export function getDb() {

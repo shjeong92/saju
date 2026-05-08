@@ -46,7 +46,7 @@ await db
 console.log("user_profiles upsert ok");
 
 const found = await db.query.users.findFirst({
-  where: eq(users.id, created.id),
+  where: { id: created.id },
 });
 console.log("read back ok:", found?.email);
 

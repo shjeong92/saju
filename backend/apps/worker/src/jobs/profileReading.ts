@@ -21,7 +21,7 @@ export async function handleProfileReading(
     .where(eq(schema.personalReadings.id, readingId));
 
   const chart = await db.query.sajuCharts.findFirst({
-    where: eq(schema.sajuCharts.userId, userId),
+    where: { userId },
   });
   if (!chart) {
     await db

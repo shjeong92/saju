@@ -17,10 +17,10 @@
   },
   "dependencies": {
     "@saju/shared": "workspace:*",
-    "drizzle-orm": "^0.45.0",
+    "drizzle-orm": "1.0.0-rc.2",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.0"
+    "drizzle-kit": "1.0.0-rc.2"
   }
 }
