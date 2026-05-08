@@ -11,9 +11,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@urql/next": "^2.0.0",
+    "graphql": "^16.14.0",
+    "graphql-ws": "^6.0.8",
     "next": "^15.1.0",
+    "next-auth": "^5.0.0-beta.31",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "urql": "^5.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

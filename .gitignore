@@ -16,6 +16,9 @@ out/
 .turbo/
 *.tsbuildinfo
 
+# Tooling artifacts
+.playwright-mcp/
+
 # Env files
 .env
 .env.local
