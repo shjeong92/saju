@@ -78,10 +78,13 @@
 
 ## Day 2 오전 - GraphQL 인프라
 
-- [ ] `packages/graphql` Pothos 셋업 + 빌더 정의
-- [ ] Pothos 플러그인 5종 등록: errors, relay, dataloader, scope-auth, drizzle (04-pothos-yoga §7)
+> 🔄 **선행 작업 추가 발생**: `@pothos/plugin-drizzle@0.17`이 drizzle-orm `>=1.0.0-beta.2` peer 요구
+> → drizzle-orm 0.45.2 → **1.0-rc.2** 업그레이드 (RQBv2 마이그레이션 포함). 커밋 `7c5a0e5`로 분리.
+
+- [x] `packages/graphql` Pothos 셋업 + 빌더 정의
+- [x] Pothos 플러그인 5종 등록: errors, relay, dataloader, scope-auth, drizzle (04-pothos-yoga §7)
 - [ ] Yoga를 Hono `/graphql` 라우트에 마운트
-- [ ] GraphQL context: JWT 검증 → userId 주입 + db + loaders (07 §4)
+- [ ] GraphQL context: JWT 검증 → userId 주입 + db + loaders (07 §4) — 타입은 정의됨, factory 구현 필요
 - [ ] Scalar (DateTime, Date) + Enum (모든 enum) 등록
 - [ ] User / UserProfile / SajuChart / PersonalReading / DailyFortune 객체 타입
 - [ ] DataLoader 직접 작성 1개 (matchesByUserId) (05-dataloader §2)
@@ -198,11 +201,11 @@
 - [x] §8 Studio (`bun run db:studio` 부팅 확인, https://local.drizzle.studio — 11개 테이블 정상)
 
 ### 04-pothos-yoga
-- [ ] §2 builder
+- [x] §2 builder (`packages/graphql/src/builder.ts` SchemaBuilder<{Context, AuthScopes, DrizzleRelations, ...}>)
 - [ ] §3 Object Type
 - [ ] §4 Mutation
 - [ ] §5 Yoga + Hono 통합
-- [ ] §7 Plugin 5종 (errors, relay, dataloader, scope-auth, drizzle)
+- [x] §7 Plugin 5종 (errors, relay, dataloader, scope-auth, drizzle)
 
 ### 05-dataloader
 - [ ] §2 createLoaders 직접 작성
@@ -240,13 +243,16 @@
 - 사전 준비: 4/6 완료
 - Day 1 오전: 10/10 완료 ✅
 - Day 1 오후: 18/19 완료 ✅ (FlowProducer만 남음 — Day 2 매칭 잡과 함께)
-- Day 2 오전: 0/11
+- Day 2 오전: **2/11** (Pothos builder + 플러그인 5종 셋업 완료, Yoga 마운트부터 이어서)
 - Day 2 오후: 0/13
 - Day 3 오전: 0/10
 - Day 3 오후: 0/13
 - 출시 직후: 0/4
 
-**전체: 32/86 = 37% 진행**
+**전체: 34/86 = 40% 진행**
+
+> 📝 **다음 세션 시작점**: Day 2 오전 Step 2 (Yoga를 Hono `/graphql`에 마운트 + Context factory 구현)
+> 직전 커밋: `7ac5e43 feat(graphql): Pothos builder + 플러그인 5종 셋업`
 
 ## 진행 순서 (지금부터)
 
