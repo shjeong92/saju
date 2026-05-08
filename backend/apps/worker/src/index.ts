@@ -23,6 +23,7 @@ import {
   type CronTickData,
   type CronTickJobName,
 } from "./jobs/cronTick.ts";
+import { closePublisher } from "./pubsub.ts";
 
 type AiJobName = "profile-reading" | "compatibility" | "daily-fortune";
 type AiJobData = AiProfileReadingData | AiCompatibilityData | AiDailyFortuneData;
@@ -127,6 +128,7 @@ const shutdown = async (signal: string) => {
   console.log(`[worker] received ${signal}, closing...`);
   await Promise.all([aiWorker.close(), matchWorker.close(), cronWorker.close()]);
   await Promise.all([aiQueueForChaining.close(), cronQueue.close()]);
+  await closePublisher();
   await getRedisConnection().quit();
   process.exit(0);
 };

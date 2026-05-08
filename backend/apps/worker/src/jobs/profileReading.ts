@@ -2,6 +2,7 @@ import { generateProfileReading } from "@saju/ai";
 import { getDb, schema } from "@saju/db";
 import { eq, sql } from "drizzle-orm";
 import type { Job } from "bullmq";
+import { publishReadingReady } from "../pubsub.ts";
 
 export type AiProfileReadingData = {
   userId: string;
@@ -50,6 +51,7 @@ export async function handleProfileReading(
         updatedAt: sql`now()`,
       })
       .where(eq(schema.personalReadings.id, readingId));
+    await publishReadingReady(userId, readingId);
     console.log(`[worker] profile-reading completed: reading=${readingId}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

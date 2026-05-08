@@ -2,6 +2,7 @@ import { generateCompatibility } from "@saju/ai";
 import { getDb, schema } from "@saju/db";
 import { eq, sql } from "drizzle-orm";
 import type { Job } from "bullmq";
+import { publishReportReady } from "../pubsub.ts";
 
 export type AiCompatibilityData = {
   matchId: string;
@@ -62,6 +63,7 @@ export async function handleCompatibility(
         updatedAt: sql`now()`,
       })
       .where(eq(schema.compatibilityReports.id, reportId));
+    await publishReportReady(matchId, reportId);
     console.log(`[worker] compatibility completed: report=${reportId}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
