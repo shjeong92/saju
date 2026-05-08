@@ -13,7 +13,9 @@
     "db:push": "bun --env-file=../../.env x drizzle-kit push",
     "db:migrate": "bun --env-file=../../.env x drizzle-kit migrate",
     "db:studio": "bun --env-file=../../.env x drizzle-kit studio",
-    "db:smoke": "bun --env-file=../../.env run src/scripts/smoke.ts"
+    "db:smoke": "bun --env-file=../../.env run src/scripts/smoke.ts",
+    "db:q": "bun --env-file=../../.env run src/scripts/query.ts",
+    "db:shell": "bun --env-file=../../.env repl"
   },
   "dependencies": {
     "@saju/shared": "workspace:*",

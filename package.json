@@ -16,6 +16,8 @@
     "db:push": "cd backend/packages/db && bun run db:push",
     "db:studio": "cd backend/packages/db && bun run db:studio",
     "db:smoke": "cd backend/packages/db && bun run db:smoke",
+    "db:shell": "cd backend/packages/db && bun run db:shell",
+    "db:q": "cd backend/packages/db && bun --env-file=../../.env run src/scripts/query.ts",
     "typecheck": "cd backend && bun run typecheck && cd ../frontend && bun run typecheck",
     "install:all": "bun install && cd backend && bun install && cd ../frontend && bun install"
   },
