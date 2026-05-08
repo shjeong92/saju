@@ -1,6 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const authProviderEnum = pgEnum("auth_provider", ["kakao", "google"]);
+export const authProviderEnum = pgEnum("auth_provider", ["google"]);
 
 export const genderEnum = pgEnum("gender", ["male", "female"]);
 

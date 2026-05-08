@@ -1,4 +1,4 @@
-CREATE TYPE "public"."auth_provider" AS ENUM('kakao', 'google');--> statement-breakpoint
+CREATE TYPE "public"."auth_provider" AS ENUM('google');--> statement-breakpoint
 CREATE TYPE "public"."calendar_type" AS ENUM('solar', 'lunar', 'lunar_leap');--> statement-breakpoint
 CREATE TYPE "public"."fortune_score" AS ENUM('great', 'good', 'normal', 'caution', 'bad');--> statement-breakpoint
 CREATE TYPE "public"."gender" AS ENUM('male', 'female');--> statement-breakpoint

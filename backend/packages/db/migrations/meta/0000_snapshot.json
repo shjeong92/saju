@@ -1,5 +1,5 @@
 {
-  "id": "f1a3f439-85b4-4823-9392-36368af24a31",
+  "id": "01699803-c725-4796-adea-7bf2cf6e62b7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -432,7 +432,6 @@
       "name": "auth_provider",
       "schema": "public",
       "values": [
-        "kakao",
         "google"
       ]
     },

@@ -7,7 +7,7 @@ const db = createDb();
 const [created] = await db
   .insert(users)
   .values({
-    provider: "kakao",
+    provider: "google",
     providerId: "smoke-test-1",
     name: "smoke",
     email: "smoke@example.com",
