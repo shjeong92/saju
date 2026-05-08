@@ -1,6 +1,9 @@
 import { calculateSaju, type SajuResult } from "ssaju";
 
 export type { SajuResult } from "ssaju";
+export * from "./relations.ts";
+export * from "./tenGods.ts";
+export * from "./compatibility.ts";
 
 export type ComputeSajuInput = {
   birthDate: string;
@@ -178,4 +181,28 @@ export function computeSajuChart(input: ComputeSajuInput): SajuChartFields {
     rawChart: result as unknown as Record<string, unknown>,
     compactReading: result.toCompact(),
   };
+}
+
+export type ComputeTodayGanzhiInput = ComputeSajuInput & { forDate: string };
+
+export function computeTodayGanzhi(input: ComputeTodayGanzhiInput): string | null {
+  const [yStr = "", mStr = "", dStr = ""] = input.birthDate.split("-");
+  const [hh = "12", mm = "0"] = (input.birthTime ?? "12:00").split(":");
+  const now = new Date(`${input.forDate}T12:00:00+09:00`);
+  if (Number.isNaN(now.getTime())) return null;
+
+  const result = calculateSaju({
+    year: Number(yStr),
+    month: Number(mStr),
+    day: Number(dStr),
+    hour: Number(hh),
+    minute: Number(mm),
+    gender: input.gender === "male" ? "남" : "여",
+    calendar: input.calendarType === "solar" ? "solar" : "lunar",
+    leap: input.calendarType === "lunar_leap",
+    timezone: "Asia/Seoul",
+    now,
+  });
+
+  return result.reference?.codes?.today ?? null;
 }
