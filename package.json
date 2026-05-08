@@ -1,0 +1,19 @@
+{
+  "name": "saju",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "dev:backend": "cd backend && bun run dev",
+    "dev:frontend": "cd frontend && bun run dev",
+    "dev:infra": "docker compose -f infra/docker-compose.dev.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.dev.yml down",
+    "infra:reset": "docker compose -f infra/docker-compose.dev.yml down -v",
+    "typecheck": "cd backend && bun run typecheck && cd ../frontend && bun run typecheck",
+    "install:all": "bun install && cd backend && bun install && cd ../frontend && bun install"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

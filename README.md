@@ -31,16 +31,18 @@ saju/
 ## Development
 
 ```bash
-# Backend
-cd backend
-bun install
-bun run dev        # api + worker 동시 실행
+# 1. 의존성 한 번에 설치
+bun run install:all
 
-# Frontend
-cd frontend
-bun install
+# 2. Postgres + Redis 띄우기 (Docker 필요)
+bun run dev:infra
+
+# 3. api(4000) + worker + web(3100) 동시 실행
 bun run dev
 ```
+
+개별 실행: `bun run dev:backend`, `bun run dev:frontend`
+인프라 정리: `bun run infra:down` (데이터 유지) / `bun run infra:reset` (전체 초기화)
 
 ## Docs
 
