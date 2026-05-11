@@ -26,6 +26,10 @@ export const chatRooms = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    lastMessageSenderId: uuid("last_message_sender_id").references(
+      () => users.id,
+      { onDelete: "set null" },
+    ),
     readByA: timestamp("read_by_a", { withTimezone: true }),
     readByB: timestamp("read_by_b", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

@@ -24,6 +24,7 @@ export const ChatRoomType = builder.drizzleObject("chatRooms", {
         if (!ctx.userId) throw new Error("unauthorized");
         const lastMsg = room.lastMessageAt;
         if (!lastMsg) return false;
+        if (room.lastMessageSenderId === ctx.userId) return false;
         const myRead =
           room.userAId === ctx.userId ? room.readByA : room.readByB;
         if (!myRead) return true;

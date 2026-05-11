@@ -291,6 +291,13 @@ builder.mutationFields((t) => ({
           })
           .returning();
         if (systemMsg) {
+          await ctx.db
+            .update(schema.chatRooms)
+            .set({
+              lastMessageAt: systemMsg.createdAt,
+              lastMessageSenderId: null,
+            })
+            .where(eq(schema.chatRooms.id, txResult.createdRoomId));
           await ctx.pubsub.publish(Topics.chatRoom(txResult.createdRoomId), {
             id: systemMsg.id,
             roomId: systemMsg.roomId,
@@ -350,7 +357,10 @@ builder.mutationFields((t) => ({
         if (!msg) throw new Error("message insert failed");
         await tx
           .update(schema.chatRooms)
-          .set({ lastMessageAt: msg.createdAt })
+          .set({
+            lastMessageAt: msg.createdAt,
+            lastMessageSenderId: me,
+          })
           .where(eq(schema.chatRooms.id, room.id));
         return msg;
       });
