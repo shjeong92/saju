@@ -29,24 +29,29 @@ function buildContextDeps(): ContextDeps {
     pubsub: getPubSub(),
     resolveUserId: verifyUserToken,
     enqueueProfileReading: async (userId, readingId, version) => {
-      await getAiQueue().add(
+      const ai = getAiQueue();
+      const jobId = profileReadingJobId(userId, version);
+      await ai.remove(jobId);
+      await ai.add(
         "profile-reading",
         { userId, readingId, version },
-        { jobId: profileReadingJobId(userId, version) },
+        { jobId },
       );
     },
     enqueueMatchCurate: async (userId, topK) => {
-      await getMatchQueue().add(
-        "curate",
-        { userId, topK },
-        { jobId: matchCurateJobId(userId) },
-      );
+      const match = getMatchQueue();
+      const jobId = matchCurateJobId(userId);
+      await match.remove(jobId);
+      await match.add("curate", { userId, topK }, { jobId });
     },
     enqueueDailyFortune: async (userId, forDate) => {
-      await getAiQueue().add(
+      const ai = getAiQueue();
+      const jobId = dailyFortuneJobId(userId, forDate);
+      await ai.remove(jobId);
+      await ai.add(
         "daily-fortune",
         { userId, forDate },
-        { jobId: dailyFortuneJobId(userId, forDate) },
+        { jobId },
       );
     },
   };
