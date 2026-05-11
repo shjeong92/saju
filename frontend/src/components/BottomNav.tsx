@@ -50,7 +50,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-hanji-200 bg-hanji-50/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-ink-200 bg-white/98 backdrop-blur-sm shadow-[0_-4px_12px_rgba(28,25,23,0.06)] pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex max-w-3xl items-stretch justify-between">
         {TABS.map((tab) => {
