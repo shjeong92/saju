@@ -70,6 +70,8 @@ const ROOM_MESSAGE_ADDED_SUB = graphql(`
 type ChatRoom = NonNullable<ChatRoomDetailQuery["chatRoom"]>;
 type Message = ChatRoom["messages"][number];
 
+const GROUP_WINDOW_MS = 60_000;
+
 export function ChatRoomView({
   roomId,
   currentUserId,
@@ -90,6 +92,7 @@ export function ChatRoomView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [liveMessages, setLiveMessages] = useState<Message[]>([]);
   const scrollEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useSubscription(
     {
@@ -124,19 +127,25 @@ export function ChatRoomView({
     void markRoomRead({ roomId });
   }, [messages.length, currentUserId, roomId, markRoomRead]);
 
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [draft]);
+
   if (fetching && !data) {
     return (
-      <main style={S.main}>
-        <p>불러오는 중...</p>
+      <main className="mx-auto flex h-screen max-w-2xl items-center justify-center px-5">
+        <p className="text-sm text-ink-500">불러오는 중...</p>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main style={S.main}>
-        <h1>채팅방</h1>
-        <p style={S.error}>오류: {error.message}</p>
+      <main className="mx-auto max-w-2xl px-5 py-6">
+        <p className="text-sm text-crimson-600">오류: {error.message}</p>
       </main>
     );
   }
@@ -144,14 +153,14 @@ export function ChatRoomView({
   const room = data?.chatRoom;
   if (!room) {
     return (
-      <main style={S.main}>
-        <h1>채팅방</h1>
-        <p style={S.error}>채팅방을 찾을 수 없어요.</p>
-        <p>
-          <Link href="/chat" style={{ color: "#666" }}>
-            ← 채팅방 목록
-          </Link>
-        </p>
+      <main className="mx-auto max-w-2xl px-5 py-6">
+        <p className="text-sm text-ink-500">채팅방을 찾을 수 없어요.</p>
+        <Link
+          href="/chat"
+          className="mt-2 inline-flex text-sm text-ink-500 hover:text-ink-700"
+        >
+          ← 채팅방 목록
+        </Link>
       </main>
     );
   }
@@ -183,203 +192,297 @@ export function ChatRoomView({
     }
   };
 
+  const rendered = buildRenderItems(messages, currentUserId);
+
   return (
-    <main style={S.main}>
-      <header style={S.header}>
-        <Link href="/chat" style={S.backLink}>
-          ←
-        </Link>
-        <h1 style={S.h1}>{room.partner.name}</h1>
+    <>
+      <header className="sticky top-0 z-20 border-b border-hanji-200 bg-hanji-50/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+          <Link
+            href="/chat"
+            aria-label="채팅방 목록으로"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-ink-700 hover:bg-hanji-100 transition-colors"
+          >
+            ←
+          </Link>
+          <h1 className="m-0 font-serif text-lg text-ink-900">
+            {room.partner.name}
+          </h1>
+        </div>
       </header>
 
-      <section style={S.messageList}>
-        {messages.length === 0 ? (
-          <p style={S.empty}>첫 메시지를 보내보세요.</p>
+      <main className="mx-auto max-w-2xl px-4 pb-32 pt-4">
+        {rendered.length === 0 ? (
+          <p className="mt-12 text-center text-sm italic text-ink-400">
+            첫 메시지를 보내보세요.
+          </p>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              msg={msg}
-              isMine={msg.sender?.id === currentUserId}
-            />
-          ))
+          <div className="flex flex-col">
+            {rendered.map((item) => {
+              if (item.kind === "day") {
+                return <DaySeparator key={item.key} label={item.label} />;
+              }
+              if (item.kind === "system") {
+                return <SystemRow key={item.key} body={item.body} />;
+              }
+              return (
+                <MessageBubble
+                  key={item.key}
+                  body={item.body}
+                  isMine={item.isMine}
+                  senderName={item.senderName}
+                  time={item.time}
+                  showName={item.showName}
+                  showTime={item.showTime}
+                  showTail={item.showTail}
+                  groupTopGap={item.groupTopGap}
+                />
+              );
+            })}
+          </div>
         )}
         <div ref={scrollEndRef} />
-      </section>
+      </main>
 
-      {sendError && <p style={S.error}>{sendError}</p>}
-
-      <section style={S.composer}>
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈)"
-          rows={2}
-          style={S.textarea}
-          disabled={busy}
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={busy || draft.trim().length === 0}
-          style={{
-            ...S.sendBtn,
-            opacity: busy || draft.trim().length === 0 ? 0.5 : 1,
-          }}
-        >
-          전송
-        </button>
-      </section>
-    </main>
+      <div className="fixed inset-x-0 bottom-20 z-30 border-t border-hanji-200 bg-hanji-50/95 backdrop-blur">
+        <div className="mx-auto max-w-2xl px-4 py-3">
+          {sendError && (
+            <p className="mb-2 text-xs text-crimson-600">{sendError}</p>
+          )}
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="메시지를 입력하세요"
+              rows={1}
+              className="flex-1 resize-none rounded-2xl border border-ink-200 bg-white px-4 py-2.5 text-sm leading-relaxed text-ink-900 placeholder:text-ink-400 focus:border-vermilion-500 focus:outline-none focus:ring-1 focus:ring-vermilion-500 disabled:opacity-50"
+              disabled={busy}
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={busy || draft.trim().length === 0}
+              className="flex h-10 shrink-0 items-center rounded-full bg-vermilion-500 px-4 text-sm font-semibold text-white hover:bg-vermilion-600 disabled:opacity-40 transition-colors"
+            >
+              전송
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
-function MessageBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
-  if (msg.type === "system") {
-    return (
-      <div style={S.systemRow}>
-        <p style={S.systemText}>{msg.body}</p>
-      </div>
-    );
+type RenderItem =
+  | { kind: "day"; key: string; label: string }
+  | { kind: "system"; key: string; body: string }
+  | {
+      kind: "bubble";
+      key: string;
+      body: string;
+      isMine: boolean;
+      senderName: string | null;
+      time: string;
+      showName: boolean;
+      showTime: boolean;
+      showTail: boolean;
+      groupTopGap: boolean;
+    };
+
+function buildRenderItems(
+  messages: readonly Message[],
+  currentUserId: string,
+): RenderItem[] {
+  const out: RenderItem[] = [];
+  let lastDayKey: string | null = null;
+  let lastBubble: {
+    senderId: string | null;
+    minuteKey: string;
+    date: Date | null;
+    index: number;
+  } | null = null;
+
+  for (const msg of messages) {
+    const date = toDate(msg.createdAt);
+    const dayKey = date
+      ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      : "unknown";
+    if (dayKey !== lastDayKey) {
+      out.push({
+        kind: "day",
+        key: `day-${msg.id}`,
+        label: formatDayLabel(date),
+      });
+      lastDayKey = dayKey;
+      lastBubble = null;
+    }
+
+    if (msg.type === "system") {
+      out.push({ kind: "system", key: msg.id, body: msg.body });
+      lastBubble = null;
+      continue;
+    }
+
+    const isMine = msg.sender?.id === currentUserId;
+    const senderId = msg.sender?.id ?? null;
+    const minuteKey = date
+      ? `${dayKey}-${date.getHours()}:${date.getMinutes()}`
+      : `unknown-${msg.id}`;
+
+    const sameSender = !!lastBubble && lastBubble.senderId === senderId;
+    const sameMinute = !!lastBubble && lastBubble.minuteKey === minuteKey;
+    const withinWindow =
+      !!lastBubble &&
+      !!lastBubble.date &&
+      !!date &&
+      date.getTime() - lastBubble.date.getTime() <= GROUP_WINDOW_MS;
+
+    const groupContinuation = sameSender && sameMinute && withinWindow;
+    const showName = !isMine && !groupContinuation;
+    const groupTopGap = !groupContinuation;
+
+    if (lastBubble && !groupContinuation) {
+      const prev = out[lastBubble.index];
+      if (prev?.kind === "bubble") {
+        out[lastBubble.index] = { ...prev, showTime: true, showTail: true };
+      }
+    }
+
+    const placeholderTime = formatTime(date);
+    const item: RenderItem = {
+      kind: "bubble",
+      key: msg.id,
+      body: msg.body,
+      isMine,
+      senderName: msg.sender?.name ?? null,
+      time: placeholderTime,
+      showName,
+      showTime: false,
+      showTail: false,
+      groupTopGap,
+    };
+    const insertedIndex = out.length;
+    out.push(item);
+    lastBubble = { senderId, minuteKey, date, index: insertedIndex };
   }
 
-  return (
-    <div
-      style={{
-        ...S.userRow,
-        justifyContent: isMine ? "flex-end" : "flex-start",
-      }}
-    >
-      <div
-        style={{
-          ...S.bubble,
-          background: isMine ? "#2563eb" : "#f3f4f6",
-          color: isMine ? "#fff" : "#111",
-        }}
-      >
-        {!isMine && msg.sender?.name && (
-          <p style={S.senderName}>{msg.sender.name}</p>
-        )}
-        <p style={S.body}>{msg.body}</p>
-        <p style={{ ...S.time, color: isMine ? "#dbeafe" : "#6b7280" }}>
-          {formatTime(msg.createdAt)}
-        </p>
-      </div>
-    </div>
-  );
+  if (lastBubble) {
+    const prev = out[lastBubble.index];
+    if (prev?.kind === "bubble") {
+      out[lastBubble.index] = { ...prev, showTime: true, showTail: true };
+    }
+  }
+
+  return out;
 }
 
-function formatTime(value: unknown): string {
-  if (typeof value !== "string" && !(value instanceof Date)) return "";
+function toDate(value: unknown): Date | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value !== "string") return null;
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatTime(d: Date | null): string {
+  if (!d) return "";
   return `${d.getHours().toString().padStart(2, "0")}:${d
     .getMinutes()
     .toString()
     .padStart(2, "0")}`;
 }
 
-const S = {
-  main: {
-    padding: 24,
-    fontFamily: "system-ui",
-    maxWidth: 720,
-    margin: "0 auto",
-    display: "flex",
-    flexDirection: "column" as const,
-    minHeight: "100vh",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    paddingBottom: 12,
-    borderBottom: "1px solid #eee",
-  },
-  backLink: {
-    fontSize: 18,
-    textDecoration: "none",
-    color: "#000",
-    padding: "4px 8px",
-    border: "1px solid #ddd",
-    borderRadius: 4,
-  },
-  h1: { fontSize: 20, margin: 0 },
-  error: { color: "crimson", margin: "8px 0" },
-  empty: {
-    textAlign: "center" as const,
-    color: "#999",
-    fontStyle: "italic" as const,
-  },
-  messageList: {
-    flex: 1,
-    overflowY: "auto" as const,
-    padding: "16px 0",
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 8,
-  },
-  systemRow: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "4px 0",
-  },
-  systemText: {
-    fontSize: 12,
-    color: "#888",
-    background: "#f9fafb",
-    padding: "4px 10px",
-    borderRadius: 10,
-    margin: 0,
-  },
-  userRow: {
-    display: "flex",
-    width: "100%",
-  },
-  bubble: {
-    maxWidth: "70%",
-    padding: "8px 12px",
-    borderRadius: 12,
-    fontSize: 14,
-    lineHeight: 1.4,
-    wordBreak: "break-word" as const,
-  },
-  senderName: {
-    fontSize: 11,
-    margin: "0 0 2px",
-    fontWeight: 600,
-    opacity: 0.7,
-  },
-  body: { margin: 0, whiteSpace: "pre-wrap" as const },
-  time: {
-    fontSize: 10,
-    margin: "4px 0 0",
-    textAlign: "right" as const,
-  },
-  composer: {
-    display: "flex",
-    gap: 8,
-    padding: "12px 0",
-    borderTop: "1px solid #eee",
-  },
-  textarea: {
-    flex: 1,
-    padding: 8,
-    border: "1px solid #ccc",
-    borderRadius: 6,
-    fontSize: 14,
-    fontFamily: "inherit",
-    resize: "none" as const,
-  },
-  sendBtn: {
-    padding: "0 16px",
-    border: "1px solid #2563eb",
-    background: "#2563eb",
-    color: "#fff",
-    borderRadius: 6,
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 600,
-  },
-} as const;
+const DAY_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "short",
+});
+
+function formatDayLabel(d: Date | null): string {
+  if (!d) return "";
+  return DAY_FORMATTER.format(d);
+}
+
+function DaySeparator({ label }: { label: string }) {
+  return (
+    <div className="my-4 flex items-center gap-3">
+      <span className="h-px flex-1 bg-hanji-200" />
+      <span className="text-[11px] text-ink-500">{label}</span>
+      <span className="h-px flex-1 bg-hanji-200" />
+    </div>
+  );
+}
+
+function SystemRow({ body }: { body: string }) {
+  return (
+    <div className="my-2 flex justify-center">
+      <p className="m-0 rounded-full border border-hanji-200 bg-hanji-100 px-3 py-1 text-[12px] text-ink-500">
+        {body}
+      </p>
+    </div>
+  );
+}
+
+function MessageBubble({
+  body,
+  isMine,
+  senderName,
+  time,
+  showName,
+  showTime,
+  showTail,
+  groupTopGap,
+}: {
+  body: string;
+  isMine: boolean;
+  senderName: string | null;
+  time: string;
+  showName: boolean;
+  showTime: boolean;
+  showTail: boolean;
+  groupTopGap: boolean;
+}) {
+  const rowGap = groupTopGap ? "mt-2" : "mt-0.5";
+  return (
+    <div
+      className={`flex w-full ${rowGap} ${isMine ? "justify-end" : "justify-start"}`}
+    >
+      <div
+        className={`flex max-w-[78%] flex-col ${isMine ? "items-end" : "items-start"}`}
+      >
+        {showName && senderName && !isMine && (
+          <p className="mb-1 ml-1 text-[11px] font-medium text-ink-500">
+            {senderName}
+          </p>
+        )}
+        <div
+          className={`flex items-end gap-1.5 ${isMine ? "flex-row-reverse" : "flex-row"}`}
+        >
+          <div
+            className={`relative whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
+              isMine
+                ? "bg-vermilion-500 text-white"
+                : "bg-white text-ink-900 border border-ink-200"
+            }`}
+            style={
+              showTail
+                ? isMine
+                  ? { borderBottomRightRadius: 4 }
+                  : { borderBottomLeftRadius: 4 }
+                : undefined
+            }
+          >
+            {body}
+          </div>
+          {showTime && (
+            <span className="mb-0.5 shrink-0 text-[10px] text-ink-400">
+              {time}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
