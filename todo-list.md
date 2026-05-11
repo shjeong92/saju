@@ -192,9 +192,12 @@
 - [x] `as const satisfies Record<Enum, ...>` 패턴 (SCORE_META 모든 enum 값 빠짐없이 다루는지 컴파일 강제)
 - [x] e2e 검증: 백엔드 → 워커 → AI(Claude) → DB → 프론트 데이터 흐름 통과
 
-#### Block 6: 매칭 피드 + 매칭 상세 ⏳ (다음 세션)
-- [ ] 페이지: 매칭 피드 (점수 카드 + like/dismiss 버튼)
-- [ ] 페이지: 매칭 상세 + 궁합 리포트 (status별 분기 UI)
+#### Block 6: 매칭 피드 + 매칭 상세 ✅
+- [x] 백엔드: `Match.compatibilityReport` field 노출 (`t.relation(...)` 1줄, drizzle relation 자동 join)
+- [x] 페이지: 매칭 피드 `/matches` (점수 카드 리스트 + breakdown 4 metric + like/dismiss + matched 알림 + 채팅방 링크)
+- [x] 페이지: 매칭 상세 `/matches/[id]` (Next.js 15 dynamic route `params: Promise<...>`, 점수 세부 + AI 풀이 5섹션 + status 분기 + polling + like/dismiss)
+- [x] `MatchStatus` enum 5종 `as const satisfies Record<...>` 패턴 (suggested/liked/matched/dismissed/expired)
+- [x] e2e 검증: Alice 매칭 5건(matched 1 + suggested 4) 정상 렌더, like mutation DB+UI 갱신, polling cleanup, matched UX(채팅방 링크)
 
 #### Block 7: 채팅방 ⏳ (Block 6 후)
 - [ ] 페이지: 채팅방 리스트 + 채팅방 본 페이지 (메시지 송수신 + Subscription, Playground.tsx 패턴 재사용)
@@ -295,13 +298,12 @@
 - Day 2 오전: 11/11 완료 ✅
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
-- Day 3 오후: 9/13 완료 (Block 1~5: 인프라 + 폼 + 풀이/운세) — Block 6/7 미진행
+- Day 3 오후: 11/13 완료 (Block 1~6: 인프라 + 폼 + 풀이/운세 + 매칭) — Block 7 미진행
 - 출시 직후: 0/4
 
-**전체: 75/86 = 87% 진행**
+**전체: 77/86 = 90% 진행**
 
-> 📝 **다음 세션 시작점**: Block 6 매칭 피드 + 매칭 상세 페이지
-> - 그 다음 Block 7 채팅방 리스트 + 채팅방 본 페이지 (Playground.tsx 패턴 재사용)
+> 📝 **다음 세션 시작점**: Block 7 채팅방 리스트 + 채팅방 본 페이지 (Playground.tsx 패턴 재사용)
 > - 마무리: 로그인 페이지 prod 디자인, 배포 (OCI + Vercel)
 >
 > 직전 커밋: `bf1110e feat(frontend): 내 사주 풀이 + 일일 운세 페이지 — Day 3 오후 Block 5`

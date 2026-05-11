@@ -60,5 +60,6 @@ export const MatchType = builder.drizzleObject("matches", {
         return m.userAId === ctx.userId ? m.bLiked : m.aLiked;
       },
     }),
+    compatibilityReport: t.relation("compatibilityReport", { nullable: true }),
   }),
 });
