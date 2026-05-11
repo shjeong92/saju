@@ -199,8 +199,14 @@
 - [x] `MatchStatus` enum 5종 `as const satisfies Record<...>` 패턴 (suggested/liked/matched/dismissed/expired)
 - [x] e2e 검증: Alice 매칭 5건(matched 1 + suggested 4) 정상 렌더, like mutation DB+UI 갱신, polling cleanup, matched UX(채팅방 링크)
 
-#### Block 7: 채팅방 ⏳ (Block 6 후)
-- [ ] 페이지: 채팅방 리스트 + 채팅방 본 페이지 (메시지 송수신 + Subscription, Playground.tsx 패턴 재사용)
+#### Block 7: 채팅방 ✅
+- [x] 페이지: 채팅방 리스트 `/chat` (myChatRooms query + 카드 리스트 + unread blue dot/border + 빈 상태)
+- [x] 페이지: 채팅방 본 `/chat/[roomId]` (Next.js 15 dynamic route, 메시지 송수신 + graphql-ws Subscription + 본인/상대 좌우 정렬 + system 메시지 가운데 + 자동 스크롤)
+- [x] mutation alias: SendRoomMessage/RoomMessageAdded (Playground.tsx 와 type collision 회피)
+- [x] markRoomRead useEffect (마지막 메시지가 상대 메시지면 호출 → 백엔드 readByA/B = now())
+- [x] 메시지 합성: useQuery(초기 100건) + useSubscription(신규) + mutation 응답 — id dedup으로 머지
+- [x] 홈 네비 링크 5개 (사주 입력 / 내 풀이 / 오늘의 운세 / 매칭 피드 / 채팅방)
+- [x] e2e 검증: Alice/Bob 2탭 양방향 실시간 송수신 + markRoomRead로 unread 자동 해제
 
 #### 마무리 ⏳
 - [ ] 로그인 페이지 prod 디자인 (현재 임시 버튼만)
@@ -298,15 +304,14 @@
 - Day 2 오전: 11/11 완료 ✅
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
-- Day 3 오후: 11/13 완료 (Block 1~6: 인프라 + 폼 + 풀이/운세 + 매칭) — Block 7 미진행
+- Day 3 오후: 13/13 완료 ✅ (Block 1~7: 인프라 + 폼 + 풀이/운세 + 매칭 + 채팅) — 마무리(로그인 prod 디자인) 1건 + 배포 잔여
 - 출시 직후: 0/4
 
-**전체: 77/86 = 90% 진행**
+**전체: 79/86 = 92% 진행**
 
-> 📝 **다음 세션 시작점**: Block 7 채팅방 리스트 + 채팅방 본 페이지 (Playground.tsx 패턴 재사용)
-> - 마무리: 로그인 페이지 prod 디자인, 배포 (OCI + Vercel)
+> 📝 **다음 세션 시작점**: 마무리 (로그인 페이지 prod 디자인) → 배포 (시드 스크립트 + OCI Docker Compose + Vercel)
 >
-> 직전 커밋: `bf1110e feat(frontend): 내 사주 풀이 + 일일 운세 페이지 — Day 3 오후 Block 5`
+> 직전 커밋: `3295f31 feat(frontend): 매칭 피드 + 매칭 상세 페이지 — Day 3 오후 Block 6` → Block 7 통합 커밋 추가 예정
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 

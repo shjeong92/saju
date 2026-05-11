@@ -45,6 +45,7 @@ export default async function Home() {
             <Link href="/reading" style={navLink}>내 풀이</Link>
             <Link href="/fortune" style={navLink}>오늘의 운세</Link>
             <Link href="/matches" style={navLink}>매칭 피드</Link>
+            <Link href="/chat" style={navLink}>채팅방</Link>
           </div>
 
           <form
