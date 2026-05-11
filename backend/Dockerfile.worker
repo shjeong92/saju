@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1.7
+# Build context: repo root.
+# 예) docker build -f backend/Dockerfile.worker -t saju-worker .
+
+FROM oven/bun:1.1-alpine AS deps
+WORKDIR /app
+
+COPY backend/package.json backend/bun.lock ./backend/
+COPY backend/apps/api/package.json ./backend/apps/api/
+COPY backend/apps/worker/package.json ./backend/apps/worker/
+COPY backend/packages/ai/package.json ./backend/packages/ai/
+COPY backend/packages/db/package.json ./backend/packages/db/
+COPY backend/packages/graphql/package.json ./backend/packages/graphql/
+COPY backend/packages/saju/package.json ./backend/packages/saju/
+COPY backend/packages/shared/package.json ./backend/packages/shared/
+
+WORKDIR /app/backend
+RUN bun install --frozen-lockfile
+
+# ---- runtime ----
+FROM oven/bun:1.1-alpine AS runtime
+WORKDIR /app/backend
+
+ENV NODE_ENV=production
+
+COPY --from=deps /app/backend/node_modules ./node_modules
+COPY backend/ ./
+
+USER bun
+
+# worker 는 HTTP 포트를 열지 않음.
+CMD ["bun", "run", "apps/worker/src/index.ts"]

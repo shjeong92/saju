@@ -1,0 +1,120 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: saju-postgres
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shjeong92/saju.git
+    targetRevision: HEAD
+    path: infra/k3s-manifests/postgres
+    directory:
+      exclude: "03-secret.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: saju
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: saju-redis
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shjeong92/saju.git
+    targetRevision: HEAD
+    path: infra/k3s-manifests/redis
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: saju
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: saju-api
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shjeong92/saju.git
+    targetRevision: HEAD
+    path: infra/k3s-manifests/api
+    directory:
+      exclude: "01-secret.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: saju
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: saju-worker
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shjeong92/saju.git
+    targetRevision: HEAD
+    path: infra/k3s-manifests/worker
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: saju
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: saju-ingress
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/shjeong92/saju.git
+    targetRevision: HEAD
+    path: infra/k3s-manifests/ingress
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: saju
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

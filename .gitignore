@@ -61,3 +61,7 @@ drizzle/migrations-meta/
 
 # OS
 Thumbs.db
+
+# Agent scratch
+.sisyphus/
+.playwright-mcp/

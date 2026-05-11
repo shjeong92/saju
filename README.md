@@ -8,7 +8,7 @@
 - **Frontend**: Next.js 15 (Vercel)
 - **AI**: Anthropic Claude (Sonnet 4.5) via 사내 프록시
 - **사주 엔진**: [ssaju](https://github.com/golbin/ssaju) — 4주 + 십신 + 합충형파해
-- **인프라**: OCI (Docker Compose), Vercel
+- **인프라**: OCI K3s + ArgoCD GitOps (backend/worker), Vercel (frontend)
 
 ## Structure
 
@@ -24,9 +24,18 @@ saju/
 │       ├── saju/             # ssaju wrapper + 매칭 로직
 │       ├── ai/               # Claude 클라이언트
 │       └── shared/           # 공통 타입/유틸
-├── frontend/                 # Next.js 15
-└── infra/                    # Docker Compose, OCI 배포 스크립트
+├── frontend/                 # Next.js 15 (Vercel)
+└── infra/
+    ├── docker-compose.dev.yml   # 로컬 Postgres+Redis
+    └── k3s-manifests/           # 운영 K3s GitOps 매니페스트 (ArgoCD)
 ```
+
+## Production
+
+운영 배포는 K3s + ArgoCD GitOps. 자세한 절차는 [`infra/k3s-manifests/README.md`](infra/k3s-manifests/README.md) 참고.
+
+- API: `https://api.botfolio.cc` (K3s, multi-arch GHCR 이미지)
+- Web: `https://saju-web.vercel.app` (Vercel, 프로젝트명에 따라 다를 수 있음)
 
 ## Development
 

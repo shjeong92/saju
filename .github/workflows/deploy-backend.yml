@@ -1,0 +1,103 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_API: ghcr.io/${{ github.repository_owner }}/saju-api
+  IMAGE_WORKER: ghcr.io/${{ github.repository_owner }}/saju-worker
+  IMAGE_MIGRATE: ghcr.io/${{ github.repository_owner }}/saju-migrate
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile.api
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_API }}:${{ steps.sha.outputs.short }}
+            ${{ env.IMAGE_API }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build & push worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile.worker
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_WORKER }}:${{ steps.sha.outputs.short }}
+            ${{ env.IMAGE_WORKER }}:latest
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
+
+      - name: Build & push migrate image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile.migrate
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_MIGRATE }}:${{ steps.sha.outputs.short }}
+            ${{ env.IMAGE_MIGRATE }}:latest
+          cache-from: type=gha,scope=migrate
+          cache-to: type=gha,mode=max,scope=migrate
+
+      - name: Update manifest image tags
+        run: |
+          SHA=${{ steps.sha.outputs.short }}
+          sed -i "s|image: ${{ env.IMAGE_API }}:.*|image: ${{ env.IMAGE_API }}:${SHA}|" \
+            infra/k3s-manifests/api/03-deployment.yaml
+          sed -i "s|image: ${{ env.IMAGE_WORKER }}:.*|image: ${{ env.IMAGE_WORKER }}:${SHA}|" \
+            infra/k3s-manifests/worker/02-deployment.yaml
+          sed -i "s|image: ${{ env.IMAGE_MIGRATE }}:.*|image: ${{ env.IMAGE_MIGRATE }}:${SHA}|" \
+            infra/k3s-manifests/api/05-migrate-job.yaml
+
+      - name: Commit manifest update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add infra/k3s-manifests/
+          if git diff --staged --quiet; then
+            echo "No manifest changes"
+          else
+            git commit -m "deploy: saju backend ${{ steps.sha.outputs.short }} [skip ci]"
+            git push
+          fi

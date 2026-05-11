@@ -1,0 +1,34 @@
+# ArgoCD PreSync hook: api Deployment 가 올라가기 직전에 drizzle-kit migrate 실행.
+# - hook-delete-policy: 이전 hook job 을 새 sync 시작 전에 지워서 BeforeHookCreation 충돌 방지.
+# - sync-wave -1: 같은 Application 내에서 다른 리소스보다 먼저 처리.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-migrate
+  namespace: saju
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      name: api-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/shjeong92/saju-migrate:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: api-secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

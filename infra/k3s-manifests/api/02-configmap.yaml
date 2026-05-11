@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: saju
+data:
+  NODE_ENV: "production"
+  API_PORT: "4000"
+  AI_PROXY_BASE_URL: "https://ccapi.labs.mengmota.com/anthropic"
