@@ -257,7 +257,22 @@
 - [x] 부수: Next dev SSR stale cache 인지 (.next 캐시 + 쿠키 클리어 절차 학습)
 
 #### 잔여 디자인 작업 ⏳
-- [ ] **D-Matches-Widget** `/matches` 상단 오늘 운세 한 줄 + 미응답 채팅 N건 위젯 (데일리 진입점)
+
+**Block D-Matches-Widget** `/matches` 데일리 진입점 위젯 (홈 탭 제거 공백 보충) ✅
+- [x] `MatchesPageWidget` 쿼리 신설: `myDailyFortune { status, score, sections { summary } }` + `myChatRooms { unreadByMe }` (단일 round-trip)
+- [x] `DailyFortuneWidget` 컴포넌트: 4상태 분기
+  - `null` → 점선 hanji 카드 ("아직 풀어보지 않았어요")
+  - `pending/generating` → hanji 카드 + 3-dot 펄스
+  - `failed` → crimson 톤 + 재시도 CTA
+  - `completed` → score 톤 (대길/길=jade, 평=ink, 주의=amber, 흉=crimson) + summary 한 줄 truncate
+- [x] `UnreadChatWidget` 컴포넌트: 3상태 분기
+  - 채팅방 0개 → 점선 hanji ("아직 채팅방이 없어요")
+  - unread 0 → white + ink-200 ("새 메시지 없음 →")
+  - unread N>0 → vermilion-50 + vermilion-500/40 ring + 우상단 펄스 dot + "N건 →"
+- [x] MatchesView 상단 `grid-cols-1 sm:grid-cols-2 gap-3` 배치, `hasSaju` 사용자만 노출
+- [x] `useEffect` 자동 폴링: 운세 generating 중에만 5초마다 refetch (FortuneView 패턴 재사용)
+- [x] 검증: Playwright computed style (jade-600/40 oklab, vermilion-50 rgb(255,247,237)) + aria-label ("미응답 채팅 1건 보기") + href 라우팅 (/fortune, /chat) + console error 0 + frontend typecheck 0
+
 - [ ] **D-extra** ChatListView 인라인 `const S` → Tailwind 토큰 + unread dot 톤 vermilion 통일
 - [ ] **D6** SajuForm 10필드 step/section 분할 + 진행 인디케이터
 - [ ] **D7** ReadingView/FortuneView pending/generating/completed/failed UI 통일 (D5 ProgressCard 패턴 재사용)
@@ -356,18 +371,18 @@
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
 - Day 3 오후 (Block 1~7): 13/13 완료 ✅ + 마무리 1/1 ✅ (D2b)
-- Day 3 오후 디자인 패스 + 버그 추격: 8/12 완료 (잔여 4건 D-Matches-Widget / D-extra / D6 / D7)
+- Day 3 오후 디자인 패스 + 버그 추격: 9/12 완료 (잔여 3건 D-extra / D6 / D7)
 - 배포: 0/7
 - 출시 직후: 0/4
 
-**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 8/12 — 잔여 디자인 4건, 배포 7건, 출시 직후 4건
+**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 9/12 — 잔여 디자인 3건, 배포 7건, 출시 직후 4건
 
 > 📝 **다음 세션 시작점**:
-> 1. (선호) 디자인 잔여 4건 중 선택 — D-Matches-Widget (데일리 진입점) / D-extra (채팅 리스트 톤 통일) / D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
+> 1. (선호) 디자인 잔여 3건 중 선택 — D-extra (채팅 리스트 톤 통일) / D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
 > 2. (대안) 배포 단계 진입 — 시드 스크립트 통합 → OCI Docker Compose → Vercel
 >
-> 직전 커밋: `cb787b1 feat(frontend): BottomNav 톤 흰색+그림자로 분리 — 채팅방 composer와 시각 융합 차단`
-> origin/main 보다 11 commits ahead (D1 ~ D-Home-Remove-Fix, 디자인 패스 + 버그픽스)
+> 직전 커밋 (예정): `feat(frontend): /matches 데일리 진입점 위젯 — Block D-Matches-Widget`
+> origin/main 보다 13 commits ahead (D1 ~ D-Matches-Widget, 디자인 패스 + 버그픽스)
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 

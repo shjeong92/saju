@@ -2,15 +2,32 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "urql";
 import { graphql } from "@/gql";
-import type { MatchStatus } from "@/gql/graphql";
+import type { FortuneScore, MatchStatus } from "@/gql/graphql";
 
 const HAS_SAJU_QUERY = graphql(`
   query MatchesPageHasSaju {
     myReading {
       id
+    }
+  }
+`);
+
+const MATCHES_WIDGET_QUERY = graphql(`
+  query MatchesPageWidget {
+    myDailyFortune {
+      id
+      status
+      score
+      sections {
+        summary
+      }
+    }
+    myChatRooms {
+      id
+      unreadByMe
     }
   }
 `);
@@ -108,7 +125,25 @@ export function MatchesView() {
     query: HAS_SAJU_QUERY,
     requestPolicy: "cache-and-network",
   });
+  const [{ data: widgetData }, refetchWidget] = useQuery({
+    query: MATCHES_WIDGET_QUERY,
+    requestPolicy: "cache-and-network",
+  });
   const hasSaju = !!sajuData?.myReading;
+  const fortune = widgetData?.myDailyFortune ?? null;
+  const fortuneInProgress =
+    fortune?.status === "pending" || fortune?.status === "generating";
+  const chatRooms = widgetData?.myChatRooms ?? [];
+  const unreadCount = chatRooms.filter((r) => r.unreadByMe).length;
+  const hasAnyRoom = chatRooms.length > 0;
+
+  useEffect(() => {
+    if (!fortuneInProgress) return;
+    const id = setInterval(() => {
+      refetchWidget({ requestPolicy: "network-only" });
+    }, 5000);
+    return () => clearInterval(id);
+  }, [fortuneInProgress, refetchWidget]);
   const [, likeMatch] = useMutation(LIKE_MATCH);
   const [, dismissMatch] = useMutation(DISMISS_MATCH);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -168,6 +203,16 @@ export function MatchesView() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-8">
       <Header />
+
+      {hasSaju && (
+        <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <DailyFortuneWidget fortune={fortune} />
+          <UnreadChatWidget
+            unreadCount={unreadCount}
+            hasAnyRoom={hasAnyRoom}
+          />
+        </section>
+      )}
 
       {actionError && (
         <p className="mt-3 text-sm text-crimson-600">{actionError}</p>
@@ -331,6 +376,233 @@ function EmptyCard({
       <p className="mt-2 text-sm text-ink-500">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </section>
+  );
+}
+
+type FortuneWidgetData = {
+  status: string;
+  score: FortuneScore | null | undefined;
+  sections: { summary: string | null | undefined } | null | undefined;
+};
+
+const FORTUNE_SCORE_META: Record<
+  FortuneScore,
+  { label: string; toneClass: string; ringClass: string }
+> = {
+  great: {
+    label: "대길",
+    toneClass: "text-jade-600",
+    ringClass: "border-jade-600 bg-jade-50",
+  },
+  good: {
+    label: "길",
+    toneClass: "text-jade-600",
+    ringClass: "border-jade-600/40 bg-jade-50/60",
+  },
+  normal: {
+    label: "평",
+    toneClass: "text-ink-700",
+    ringClass: "border-ink-200 bg-hanji-50",
+  },
+  caution: {
+    label: "주의",
+    toneClass: "text-amber-600",
+    ringClass: "border-amber-600/40 bg-amber-50",
+  },
+  bad: {
+    label: "흉",
+    toneClass: "text-crimson-600",
+    ringClass: "border-crimson-600/40 bg-crimson-50",
+  },
+};
+
+function DailyFortuneWidget({
+  fortune,
+}: {
+  fortune: FortuneWidgetData | null;
+}) {
+  if (!fortune) {
+    return (
+      <Link
+        href="/fortune"
+        aria-label="오늘의 운세 받기"
+        className="group flex items-center gap-3 rounded-lg border border-dashed border-hanji-300 bg-hanji-50 p-3 transition-colors hover:bg-hanji-100"
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-hanji-300 bg-white font-serif text-base text-ink-700"
+        >
+          運
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-ink-500">오늘의 운세</span>
+          <span className="block truncate text-sm text-ink-700">
+            아직 풀어보지 않았어요 →
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  const status = fortune.status;
+
+  if (status === "pending" || status === "generating") {
+    return (
+      <div
+        aria-label="오늘의 운세 생성 중"
+        className="flex items-center gap-3 rounded-lg border border-hanji-300 bg-hanji-50 p-3"
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-hanji-300 bg-white font-serif text-base text-ink-700"
+        >
+          運
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-ink-500">오늘의 운세</span>
+          <span className="flex items-center gap-1.5 text-sm text-ink-600">
+            <span>풀어보는 중</span>
+            <span aria-hidden className="flex gap-0.5">
+              <span className="h-1 w-1 animate-pulse rounded-full bg-ink-400 [animation-delay:-0.32s]" />
+              <span className="h-1 w-1 animate-pulse rounded-full bg-ink-400 [animation-delay:-0.16s]" />
+              <span className="h-1 w-1 animate-pulse rounded-full bg-ink-400" />
+            </span>
+          </span>
+        </span>
+      </div>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <Link
+        href="/fortune"
+        aria-label="오늘의 운세 재시도"
+        className="flex items-center gap-3 rounded-lg border border-crimson-600/40 bg-crimson-50 p-3 transition-colors hover:bg-crimson-50/80"
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-crimson-600/40 bg-white font-serif text-base text-crimson-600"
+        >
+          運
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-ink-500">오늘의 운세</span>
+          <span className="block truncate text-sm text-crimson-600">
+            생성에 실패했어요 →
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  const meta = fortune.score ? FORTUNE_SCORE_META[fortune.score] : null;
+  const summary = fortune.sections?.summary ?? null;
+
+  return (
+    <Link
+      href="/fortune"
+      aria-label="오늘의 운세 자세히 보기"
+      className={[
+        "flex items-center gap-3 rounded-lg border p-3 transition-colors hover:brightness-[0.98]",
+        meta?.ringClass ?? "border-ink-200 bg-white",
+      ].join(" ")}
+    >
+      <span
+        aria-hidden
+        className={[
+          "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-full border bg-white font-serif text-[11px] leading-none",
+          meta ? `${meta.toneClass} border-current` : "text-ink-700 border-ink-200",
+        ].join(" ")}
+      >
+        <span className="text-[10px] opacity-70">運</span>
+        <span className="mt-0.5 text-[11px] font-semibold">
+          {meta?.label ?? "—"}
+        </span>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] text-ink-500">오늘의 운세</span>
+        <span className="block truncate text-sm text-ink-800">
+          {summary ?? "자세히 보기 →"}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+function UnreadChatWidget({
+  unreadCount,
+  hasAnyRoom,
+}: {
+  unreadCount: number;
+  hasAnyRoom: boolean;
+}) {
+  if (!hasAnyRoom) {
+    return (
+      <Link
+        href="/chat"
+        aria-label="채팅방 보기"
+        className="flex items-center gap-3 rounded-lg border border-dashed border-hanji-300 bg-hanji-50 p-3 transition-colors hover:bg-hanji-100"
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-hanji-300 bg-white font-serif text-base text-ink-700"
+        >
+          話
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-ink-500">채팅</span>
+          <span className="block truncate text-sm text-ink-700">
+            아직 채팅방이 없어요
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  if (unreadCount === 0) {
+    return (
+      <Link
+        href="/chat"
+        aria-label="채팅방 보기"
+        className="flex items-center gap-3 rounded-lg border border-ink-200 bg-white p-3 transition-colors hover:bg-hanji-50"
+      >
+        <span
+          aria-hidden
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink-200 bg-white font-serif text-base text-ink-700"
+        >
+          話
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-ink-500">채팅</span>
+          <span className="block truncate text-sm text-ink-700">
+            새 메시지 없음 →
+          </span>
+        </span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href="/chat"
+      aria-label={`미응답 채팅 ${unreadCount}건 보기`}
+      className="flex items-center gap-3 rounded-lg border border-vermilion-500/40 bg-vermilion-50 p-3 transition-colors hover:bg-vermilion-50/70"
+    >
+      <span
+        aria-hidden
+        className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-vermilion-500/40 bg-white font-serif text-base text-vermilion-700"
+      >
+        話
+        <span className="absolute -right-0.5 -top-0.5 inline-flex h-2 w-2 rounded-full bg-vermilion-500 ring-2 ring-white" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] text-ink-500">미응답 채팅</span>
+        <span className="block truncate text-sm font-semibold text-vermilion-700">
+          <span className="tabular">{unreadCount}</span>건 →
+        </span>
+      </span>
+    </Link>
   );
 }
 
