@@ -86,11 +86,6 @@ export function ChatListView({ currentUserId }: { currentUserId: string }) {
         </div>
       )}
 
-      <p style={{ ...S.help, marginTop: 24 }}>
-        <Link href="/" style={{ color: "#666" }}>
-          ← 홈으로
-        </Link>
-      </p>
     </main>
   );
 }

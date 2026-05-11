@@ -7,6 +7,14 @@ import { useMutation, useQuery } from "urql";
 import { graphql } from "@/gql";
 import type { MatchStatus } from "@/gql/graphql";
 
+const HAS_SAJU_QUERY = graphql(`
+  query MatchesPageHasSaju {
+    myReading {
+      id
+    }
+  }
+`);
+
 const MATCHES_QUERY = graphql(`
   query Matches {
     matches {
@@ -67,6 +75,11 @@ export function MatchesView() {
     query: MATCHES_QUERY,
     requestPolicy: "cache-and-network",
   });
+  const [{ data: sajuData }] = useQuery({
+    query: HAS_SAJU_QUERY,
+    requestPolicy: "cache-and-network",
+  });
+  const hasSaju = !!sajuData?.myReading;
   const [, likeMatch] = useMutation(LIKE_MATCH);
   const [, dismissMatch] = useMutation(DISMISS_MATCH);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -155,12 +168,28 @@ export function MatchesView() {
       )}
 
       {matches.length === 0 ? (
-        <section style={S.card}>
-          <p>아직 매칭 후보가 없어요.</p>
-          <Link href="/saju" style={S.primaryLink}>
-            사주 입력하러 가기
-          </Link>
-        </section>
+        hasSaju ? (
+          <section style={S.card}>
+            <p style={{ margin: 0, fontWeight: 600 }}>
+              아직 추천할 인연이 없어요.
+            </p>
+            <p style={{ ...S.help, marginTop: 8 }}>
+              매일 새로운 후보가 추가됩니다. 잠시 후 다시 확인해 주세요.
+            </p>
+          </section>
+        ) : (
+          <section style={S.card}>
+            <p style={{ margin: 0, fontWeight: 600 }}>
+              먼저 사주를 입력해 주세요.
+            </p>
+            <p style={{ ...S.help, marginTop: 8, marginBottom: 12 }}>
+              사주를 입력해야 궁합 후보를 추천해 드릴 수 있어요.
+            </p>
+            <Link href="/saju" style={S.primaryLink}>
+              사주 입력하러 가기
+            </Link>
+          </section>
+        )
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {activeMatches.map((match) => {
@@ -261,11 +290,6 @@ export function MatchesView() {
         </div>
       )}
 
-      <p style={{ ...S.help, marginTop: 24 }}>
-        <Link href="/" style={{ color: "#666" }}>
-          ← 홈으로
-        </Link>
-      </p>
     </main>
   );
 }

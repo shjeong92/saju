@@ -1,87 +1,55 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 
-const navLink = {
-  display: "inline-block",
-  padding: "8px 12px",
-  border: "1px solid #000",
-  borderRadius: 6,
-  textDecoration: "none",
-  color: "#000",
-} as const;
-
 export default async function Home() {
   const session = await auth();
 
   return (
-    <main style={{ padding: 32, fontFamily: "system-ui", maxWidth: 720 }}>
-      <h1>Saju</h1>
-      <p>사주 기반 AI 매칭. 곧 만나요.</p>
+    <main className="mx-auto max-w-3xl px-6 pt-12 pb-8">
+      <header className="mb-8">
+        <p className="font-serif text-sm tracking-[0.3em] text-vermilion-700">
+          四柱
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink-900">
+          Saju
+        </h1>
+        <p className="mt-2 text-sm text-ink-500">
+          사주로 풀어보는 오늘의 운세와 인연.
+        </p>
+      </header>
 
       {session?.user ? (
-        <section
-          style={{
-            marginTop: 24,
-            padding: 16,
-            border: "1px solid #ddd",
-            borderRadius: 8,
-          }}
-        >
-          <h2 style={{ fontSize: 18, marginTop: 0 }}>로그인됨</h2>
-          <p style={{ margin: "4px 0" }}>이름: {session.user.name}</p>
-          <p style={{ margin: "4px 0" }}>이메일: {session.user.email ?? "(없음)"}</p>
-          <p style={{ margin: "4px 0", fontSize: 12, color: "#666" }}>
-            backend user id: {session.user.id ?? "(없음)"}
+        <section className="rounded-lg border border-hanji-200 bg-white p-5">
+          <p className="text-xs text-ink-500">반갑습니다</p>
+          <p className="mt-1 text-lg font-semibold text-ink-900">
+            {session.user.name} 님
           </p>
-          <p style={{ margin: "4px 0", fontSize: 12, color: "#666" }}>
-            accessToken (앞 20자):{" "}
-            {session.accessToken
-              ? `${session.accessToken.slice(0, 20)}...`
-              : "(없음)"}
-          </p>
-
-          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Link href="/saju" style={navLink}>사주 입력</Link>
-            <Link href="/reading" style={navLink}>내 풀이</Link>
-            <Link href="/fortune" style={navLink}>오늘의 운세</Link>
-            <Link href="/matches" style={navLink}>매칭 피드</Link>
-            <Link href="/chat" style={navLink}>채팅방</Link>
-          </div>
+          {session.user.email && (
+            <p className="mt-0.5 text-xs text-ink-400">{session.user.email}</p>
+          )}
 
           <form
             action={async () => {
               "use server";
               await signOut({ redirectTo: "/" });
             }}
-            style={{ marginTop: 12 }}
+            className="mt-4"
           >
             <button
               type="submit"
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #aaa",
-                borderRadius: 6,
-                cursor: "pointer",
-              }}
+              className="text-xs text-ink-500 underline-offset-2 hover:underline"
             >
               로그아웃
             </button>
           </form>
         </section>
       ) : (
-        <section style={{ marginTop: 24 }}>
+        <section>
           <Link
             href="/login"
-            style={{
-              display: "inline-block",
-              padding: "10px 16px",
-              border: "1px solid #ccc",
-              borderRadius: 6,
-              textDecoration: "none",
-              color: "#000",
-            }}
+            className="inline-flex items-center justify-center rounded-md bg-vermilion-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-vermilion-700"
           >
-            로그인하기
+            시작하기
           </Link>
         </section>
       )}

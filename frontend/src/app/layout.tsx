@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { auth } from "@/auth";
 import { UrqlProvider } from "@/lib/urql/Provider";
+import { BottomNav } from "@/components/BottomNav";
 import "./globals.css";
 
 export const metadata = {
@@ -17,9 +18,10 @@ export default async function RootLayout({
 
   return (
     <html lang="ko">
-      <body>
+      <body className="pb-20">
         <UrqlProvider accessToken={session?.accessToken}>
           {children}
+          {session?.user && <BottomNav />}
         </UrqlProvider>
       </body>
     </html>
