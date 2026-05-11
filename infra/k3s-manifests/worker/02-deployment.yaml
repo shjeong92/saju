@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: worker
-          image: ghcr.io/shjeong92/saju-worker:3145f8b
+          image: ghcr.io/shjeong92/saju-worker:fa214a9
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:

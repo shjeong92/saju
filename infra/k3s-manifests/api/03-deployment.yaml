@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/shjeong92/saju-api:3145f8b
+          image: ghcr.io/shjeong92/saju-api:fa214a9
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
