@@ -20,7 +20,7 @@ const MY_CHAT_ROOMS_QUERY = graphql(`
   }
 `);
 
-export function ChatListView({ currentUserId }: { currentUserId: string }) {
+export function ChatListView({ currentUserId: _currentUserId }: { currentUserId: string }) {
   const router = useRouter();
   const [{ data, fetching, error }] = useQuery({
     query: MY_CHAT_ROOMS_QUERY,
@@ -29,17 +29,17 @@ export function ChatListView({ currentUserId }: { currentUserId: string }) {
 
   if (fetching && !data) {
     return (
-      <main style={S.main}>
-        <p>불러오는 중...</p>
+      <main className="mx-auto max-w-2xl px-5 py-8">
+        <p className="text-sm text-ink-500">불러오는 중...</p>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main style={S.main}>
-        <h1>채팅방</h1>
-        <p style={S.error}>오류: {error.message}</p>
+      <main className="mx-auto max-w-2xl px-5 py-8">
+        <Header />
+        <p className="mt-4 text-sm text-crimson-600">오류: {error.message}</p>
       </main>
     );
   }
@@ -47,46 +47,88 @@ export function ChatListView({ currentUserId }: { currentUserId: string }) {
   const rooms = data?.myChatRooms ?? [];
 
   return (
-    <main style={S.main}>
-      <h1>채팅방</h1>
-      <p style={S.help}>매칭 성사된 상대와 대화할 수 있어요.</p>
-      <p style={{ ...S.help, fontSize: 11 }}>userId: {currentUserId}</p>
+    <main className="mx-auto max-w-2xl px-5 py-8">
+      <Header />
 
       {rooms.length === 0 ? (
-        <section style={S.card}>
-          <p>아직 채팅방이 없어요.</p>
-          <p style={S.help}>매칭 피드에서 좋아요를 주고받으면 채팅방이 열려요.</p>
-          <Link href="/matches" style={S.primaryLink}>
-            매칭 피드 보러 가기
-          </Link>
-        </section>
+        <EmptyCard />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {rooms.map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              onClick={() => router.push(`/chat/${room.id}`)}
-              style={{
-                ...S.card,
-                textAlign: "left",
-                cursor: "pointer",
-                borderColor: room.unreadByMe ? "#2563eb" : "#ddd",
-              }}
-            >
-              <header style={S.rowBetween}>
-                <h2 style={S.h2}>{room.partner.name}</h2>
-                <div style={S.meta}>
-                  <p style={S.metaLine}>{formatLastTime(room.lastMessageAt)}</p>
-                  {room.unreadByMe && <span style={S.unreadDot} />}
-                </div>
-              </header>
-            </button>
-          ))}
+        <div className="mt-4 flex flex-col gap-3">
+          {rooms.map((room) => {
+            const unread = !!room.unreadByMe;
+            return (
+              <button
+                key={room.id}
+                type="button"
+                onClick={() => router.push(`/chat/${room.id}`)}
+                aria-label={
+                  unread
+                    ? `${room.partner.name}와의 채팅방, 미응답 메시지 있음`
+                    : `${room.partner.name}와의 채팅방`
+                }
+                className={[
+                  "w-full rounded-lg border bg-white p-4 text-left shadow-[0_1px_2px_rgba(28,25,23,0.04)] transition-colors hover:bg-hanji-50",
+                  unread
+                    ? "border-vermilion-500/40 bg-vermilion-50/40"
+                    : "border-ink-200",
+                ].join(" ")}
+              >
+                <header className="flex items-center justify-between gap-3">
+                  <h2 className="m-0 truncate font-serif text-lg text-ink-900">
+                    {room.partner.name}
+                  </h2>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="tabular text-[12px] text-ink-500">
+                      {formatLastTime(room.lastMessageAt)}
+                    </span>
+                    {unread && (
+                      <span
+                        aria-hidden
+                        className="inline-flex h-2 w-2 shrink-0 rounded-full bg-vermilion-500 ring-2 ring-white"
+                      />
+                    )}
+                  </div>
+                </header>
+              </button>
+            );
+          })}
         </div>
       )}
-
     </main>
+  );
+}
+
+function Header() {
+  return (
+    <header>
+      <p className="m-0 font-serif text-2xl text-vermilion-700 tracking-wide">
+        話 <span className="text-ink-900">채팅</span>
+      </p>
+      <p className="mt-1 text-sm text-ink-500">
+        매칭 성사된 상대와 대화할 수 있어요.
+      </p>
+    </header>
+  );
+}
+
+function EmptyCard() {
+  return (
+    <section className="mt-4 rounded-lg border border-dashed border-hanji-300 bg-hanji-50 p-6 text-center">
+      <p className="m-0 font-serif text-lg text-ink-900">
+        아직 채팅방이 없어요
+      </p>
+      <p className="mt-2 text-sm text-ink-500">
+        매칭 피드에서 좋아요를 주고받으면 채팅방이 열려요.
+      </p>
+      <div className="mt-4">
+        <Link
+          href="/matches"
+          className="inline-flex items-center justify-center rounded-md bg-vermilion-500 px-4 py-2 text-sm font-semibold text-white hover:bg-vermilion-600 transition-colors"
+        >
+          매칭 피드 보러 가기
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -109,50 +151,3 @@ function formatLastTime(value: unknown): string {
   }
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
-
-const S = {
-  main: {
-    padding: 32,
-    fontFamily: "system-ui",
-    maxWidth: 720,
-    margin: "0 auto",
-  },
-  help: { fontSize: 13, color: "#666" },
-  error: { color: "crimson" },
-  card: {
-    padding: 16,
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    background: "#fff",
-    width: "100%",
-    font: "inherit",
-  },
-  rowBetween: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  h2: { fontSize: 18, marginTop: 0, marginBottom: 0 },
-  meta: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  metaLine: { fontSize: 12, color: "#666", margin: 0 },
-  unreadDot: {
-    display: "inline-block",
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    background: "#2563eb",
-  },
-  primaryLink: {
-    display: "inline-block",
-    marginTop: 12,
-    padding: "8px 12px",
-    border: "1px solid #000",
-    borderRadius: 6,
-    textDecoration: "none",
-    color: "#000",
-  },
-} as const;

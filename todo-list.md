@@ -273,7 +273,16 @@
 - [x] `useEffect` 자동 폴링: 운세 generating 중에만 5초마다 refetch (FortuneView 패턴 재사용)
 - [x] 검증: Playwright computed style (jade-600/40 oklab, vermilion-50 rgb(255,247,237)) + aria-label ("미응답 채팅 1건 보기") + href 라우팅 (/fortune, /chat) + console error 0 + frontend typecheck 0
 
-- [ ] **D-extra** ChatListView 인라인 `const S` → Tailwind 토큰 + unread dot 톤 vermilion 통일
+**Block D-extra** ChatListView 인라인 `const S` → Tailwind 토큰 마이그레이션 ✅
+- [x] 컨테이너 `mx-auto max-w-2xl px-5 py-8` (MatchesView/ChatRoomView와 통일)
+- [x] Header 한자 장식 패턴 ("話 채팅" + 본명조 vermilion-700, MatchesView "緣 매칭 피드" 패턴 따름)
+- [x] 카드 `rounded-lg border border-ink-200 bg-white p-4 shadow-[0_1px_2px_rgba(28,25,23,0.04)]` (MatchesView 카드 패턴 재사용)
+- [x] **unread 카드**: `border-vermilion-500/40 bg-vermilion-50/40` (위젯 채팅 카드와 톤 통일)
+- [x] **unread dot**: `bg-vermilion-500 ring-2 ring-white 8x8` (#2563eb 파랑 자취 제거, 위젯 펄스 dot 패턴)
+- [x] EmptyCard `border-dashed border-hanji-300 bg-hanji-50` + vermilion CTA "매칭 피드 보러 가기"
+- [x] aria-label 접근성 ("Bob와의 채팅방, 미응답 메시지 있음")
+- [x] `userId: ...` 디버그 라인 제거 (개발 잔재)
+- [x] 검증: Playwright computed style — unread 0 (border ink-200 + dot 없음) / unread 1 (border vermilion oklab + dot rgb(194,65,12) 8x8) + 헤더 폰트 "Noto Serif KR" + 컬러 vermilion-700
 - [ ] **D6** SajuForm 10필드 step/section 분할 + 진행 인디케이터
 - [ ] **D7** ReadingView/FortuneView pending/generating/completed/failed UI 통일 (D5 ProgressCard 패턴 재사용)
 
@@ -371,18 +380,18 @@
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
 - Day 3 오후 (Block 1~7): 13/13 완료 ✅ + 마무리 1/1 ✅ (D2b)
-- Day 3 오후 디자인 패스 + 버그 추격: 9/12 완료 (잔여 3건 D-extra / D6 / D7)
+- Day 3 오후 디자인 패스 + 버그 추격: 10/12 완료 (잔여 2건 D6 / D7)
 - 배포: 0/7
 - 출시 직후: 0/4
 
-**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 9/12 — 잔여 디자인 3건, 배포 7건, 출시 직후 4건
+**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 10/12 — 잔여 디자인 2건, 배포 7건, 출시 직후 4건
 
 > 📝 **다음 세션 시작점**:
-> 1. (선호) 디자인 잔여 3건 중 선택 — D-extra (채팅 리스트 톤 통일) / D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
+> 1. (선호) 디자인 잔여 2건 중 선택 — D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
 > 2. (대안) 배포 단계 진입 — 시드 스크립트 통합 → OCI Docker Compose → Vercel
 >
-> 직전 커밋 (예정): `feat(frontend): /matches 데일리 진입점 위젯 — Block D-Matches-Widget`
-> origin/main 보다 13 commits ahead (D1 ~ D-Matches-Widget, 디자인 패스 + 버그픽스)
+> 직전 커밋: `0fe2d5f feat(frontend): /matches 데일리 진입점 위젯 — Block D-Matches-Widget`
+> origin/main 보다 14 commits ahead (D1 ~ D-extra, 디자인 패스 + 버그픽스)
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 
