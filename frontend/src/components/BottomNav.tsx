@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type TabKey = "home" | "saju" | "reading" | "matches" | "chat";
+type TabKey = "saju" | "reading" | "matches" | "chat";
 
 const TABS: ReadonlyArray<{
   key: TabKey;
@@ -12,13 +12,6 @@ const TABS: ReadonlyArray<{
   icon: string;
   match: (pathname: string) => boolean;
 }> = [
-  {
-    key: "home",
-    href: "/",
-    label: "홈",
-    icon: "○",
-    match: (p) => p === "/",
-  },
   {
     key: "saju",
     href: "/saju",
