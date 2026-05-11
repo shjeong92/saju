@@ -58,16 +58,45 @@ const DISMISS_MATCH = graphql(`
   }
 `);
 
-const STATUS_META = {
-  suggested: { label: "추천", color: "#2563eb", bg: "#eff6ff" },
-  liked: { label: "좋아요 보냄", color: "#d97706", bg: "#fffbeb" },
-  matched: { label: "매칭 성사!", color: "#16a34a", bg: "#f0fdf4" },
-  dismissed: { label: "거절함", color: "#6b7280", bg: "#f9fafb" },
-  expired: { label: "만료", color: "#6b7280", bg: "#f9fafb" },
-} as const satisfies Record<
-  MatchStatus,
-  { label: string; color: string; bg: string }
->;
+type StatusMeta = {
+  label: string;
+  textClass: string;
+  bgClass: string;
+  borderClass: string;
+};
+
+const STATUS_META: Record<MatchStatus, StatusMeta> = {
+  suggested: {
+    label: "추천",
+    textClass: "text-vermilion-700",
+    bgClass: "bg-vermilion-50",
+    borderClass: "border-vermilion-200",
+  },
+  liked: {
+    label: "좋아요 보냄",
+    textClass: "text-amber-600",
+    bgClass: "bg-hanji-100",
+    borderClass: "border-hanji-300",
+  },
+  matched: {
+    label: "매칭 성사",
+    textClass: "text-jade-600",
+    bgClass: "bg-hanji-50",
+    borderClass: "border-jade-600",
+  },
+  dismissed: {
+    label: "거절함",
+    textClass: "text-ink-500",
+    bgClass: "bg-ink-50",
+    borderClass: "border-ink-200",
+  },
+  expired: {
+    label: "만료",
+    textClass: "text-ink-500",
+    bgClass: "bg-ink-50",
+    borderClass: "border-ink-200",
+  },
+};
 
 export function MatchesView() {
   const router = useRouter();
@@ -88,17 +117,17 @@ export function MatchesView() {
 
   if (fetching && !data) {
     return (
-      <main style={S.main}>
-        <p>불러오는 중...</p>
+      <main className="mx-auto max-w-2xl px-5 py-8">
+        <p className="text-sm text-ink-500">불러오는 중...</p>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main style={S.main}>
-        <h1>매칭 피드</h1>
-        <p style={S.error}>오류: {error.message}</p>
+      <main className="mx-auto max-w-2xl px-5 py-8">
+        <Header />
+        <p className="mt-4 text-sm text-crimson-600">오류: {error.message}</p>
       </main>
     );
   }
@@ -137,29 +166,21 @@ export function MatchesView() {
   );
 
   return (
-    <main style={S.main}>
-      <h1>매칭 피드</h1>
-      <p style={S.help}>
-        사주로 풀어본 궁합 후보예요. 점수 높은 순으로 정렬되어 있어요.
-      </p>
+    <main className="mx-auto max-w-2xl px-5 py-8">
+      <Header />
 
-      {actionError && <p style={S.error}>{actionError}</p>}
+      {actionError && (
+        <p className="mt-3 text-sm text-crimson-600">{actionError}</p>
+      )}
 
       {matchedAlert && (
-        <section
-          style={{
-            ...S.card,
-            background: "#f0fdf4",
-            borderColor: "#16a34a",
-            marginBottom: 12,
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600, color: "#16a34a" }}>
+        <section className="mt-4 rounded-lg border border-jade-600 bg-hanji-50 p-4">
+          <p className="m-0 font-semibold text-jade-600">
             🎉 매칭 성사! 채팅방이 만들어졌어요.
           </p>
           <button
             type="button"
-            style={{ ...S.linkBtn, marginTop: 8 }}
+            className="mt-3 inline-flex items-center gap-1 rounded-md border border-jade-600 bg-white px-3 py-1.5 text-sm text-jade-600 hover:bg-jade-600 hover:text-white transition-colors"
             onClick={() => router.push("/chat")}
           >
             채팅방 보러 가기 →
@@ -169,29 +190,26 @@ export function MatchesView() {
 
       {matches.length === 0 ? (
         hasSaju ? (
-          <section style={S.card}>
-            <p style={{ margin: 0, fontWeight: 600 }}>
-              아직 추천할 인연이 없어요.
-            </p>
-            <p style={{ ...S.help, marginTop: 8 }}>
-              매일 새로운 후보가 추가됩니다. 잠시 후 다시 확인해 주세요.
-            </p>
-          </section>
+          <EmptyCard
+            title="아직 추천할 인연이 없어요"
+            description="사주를 등록한 다른 사용자와 매일 새로운 후보가 추가됩니다. 잠시 후 다시 확인해 주세요."
+          />
         ) : (
-          <section style={S.card}>
-            <p style={{ margin: 0, fontWeight: 600 }}>
-              먼저 사주를 입력해 주세요.
-            </p>
-            <p style={{ ...S.help, marginTop: 8, marginBottom: 12 }}>
-              사주를 입력해야 궁합 후보를 추천해 드릴 수 있어요.
-            </p>
-            <Link href="/saju" style={S.primaryLink}>
-              사주 입력하러 가기
-            </Link>
-          </section>
+          <EmptyCard
+            title="먼저 사주를 입력해 주세요"
+            description="사주를 입력해야 궁합 후보를 추천해 드릴 수 있어요."
+            action={
+              <Link
+                href="/saju"
+                className="inline-flex items-center justify-center rounded-md bg-vermilion-500 px-4 py-2 text-sm font-semibold text-white hover:bg-vermilion-600 transition-colors"
+              >
+                사주 입력하러 가기
+              </Link>
+            }
+          />
         )
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="mt-4 flex flex-col gap-3">
           {activeMatches.map((match) => {
             const meta = STATUS_META[match.status];
             const busy = busyId === match.id;
@@ -201,87 +219,79 @@ export function MatchesView() {
             return (
               <article
                 key={match.id}
-                style={{ ...S.card, borderColor: meta.color }}
+                className="rounded-lg border border-ink-200 bg-white p-4 shadow-[0_1px_2px_rgba(28,25,23,0.04)]"
               >
-                <header style={S.cardHeader}>
-                  <div>
-                    <h2 style={S.h2}>{match.partner.name}</h2>
-                    <p style={S.help}>
+                <header className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="m-0 truncate font-serif text-xl text-ink-900">
+                        {match.partner.name}
+                      </h2>
                       <span
-                        style={{
-                          ...S.badge,
-                          color: meta.color,
-                          background: meta.bg,
-                          borderColor: meta.color,
-                        }}
+                        className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${meta.textClass} ${meta.bgClass} ${meta.borderClass}`}
                       >
                         {meta.label}
                       </span>
-                      {match.theyLiked && match.status !== "matched" && (
-                        <span style={{ ...S.badge, marginLeft: 6 }}>
-                          상대가 먼저 좋아요!
-                        </span>
-                      )}
-                    </p>
+                    </div>
+                    {match.theyLiked && match.status !== "matched" && (
+                      <p className="mt-1 text-[12px] text-vermilion-700">
+                        💌 상대가 먼저 좋아요를 보냈어요
+                      </p>
+                    )}
                   </div>
-                  <div style={S.scoreBox}>
-                    <p style={S.scoreLabel}>궁합 점수</p>
-                    <p style={{ ...S.scoreValue, color: meta.color }}>
+                  <div className="shrink-0 text-right">
+                    <p className="m-0 text-[11px] text-ink-500">궁합</p>
+                    <p className="tabular m-0 mt-0.5 font-serif text-4xl font-semibold text-vermilion-700 leading-none">
                       {match.score}
+                      <span className="ml-0.5 text-sm font-normal text-ink-400">
+                        /100
+                      </span>
                     </p>
                   </div>
                 </header>
 
-                <div style={S.breakdownGrid}>
-                  <Metric label="일간합" value={match.breakdown.ilganHap} />
-                  <Metric
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Gauge label="일간합" value={match.breakdown.ilganHap} />
+                  <Gauge
                     label="오행균형"
                     value={match.breakdown.fiveElementBalance}
                   />
-                  <Metric
+                  <Gauge
                     label="십신시너지"
                     value={match.breakdown.tenGodSynergy}
                   />
-                  <Metric
+                  <Gauge
                     label="지지관계"
                     value={match.breakdown.branchRelation}
                   />
                 </div>
 
-                <footer style={S.cardFooter}>
-                  <Link href={`/matches/${match.id}`} style={S.linkBtn}>
-                    상세 풀이 보기
+                <footer className="mt-4 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/matches/${match.id}`}
+                    className="inline-flex items-center rounded-md border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-700 hover:bg-ink-50 transition-colors"
+                  >
+                    상세 풀이 보기 →
                   </Link>
                   {canAct && (
-                    <>
+                    <div className="ml-auto flex gap-2">
                       <button
                         type="button"
-                        style={{
-                          ...S.actionBtn,
-                          background: "#16a34a",
-                          color: "#fff",
-                          opacity: busy || match.iLiked ? 0.5 : 1,
-                        }}
-                        disabled={busy || match.iLiked}
-                        onClick={() => handleLike(match.id)}
-                      >
-                        {match.iLiked ? "좋아요 보냄" : "💚 좋아요"}
-                      </button>
-                      <button
-                        type="button"
-                        style={{
-                          ...S.actionBtn,
-                          background: "#fff",
-                          color: "#6b7280",
-                          borderColor: "#d1d5db",
-                          opacity: busy ? 0.5 : 1,
-                        }}
+                        className="inline-flex items-center rounded-md border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-500 hover:bg-ink-50 disabled:opacity-50 transition-colors"
                         disabled={busy}
                         onClick={() => handleDismiss(match.id)}
                       >
                         거절
                       </button>
-                    </>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-md bg-vermilion-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-vermilion-600 disabled:opacity-50 transition-colors"
+                        disabled={busy || match.iLiked}
+                        onClick={() => handleLike(match.id)}
+                      >
+                        {match.iLiked ? "💚 보냄" : "💚 좋아요"}
+                      </button>
+                    </div>
                   )}
                 </footer>
               </article>
@@ -289,101 +299,73 @@ export function MatchesView() {
           })}
         </div>
       )}
-
     </main>
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Header() {
   return (
-    <div style={S.metric}>
-      <p style={S.metricLabel}>{label}</p>
-      <p style={S.metricValue}>{value.toFixed(1)}</p>
-    </div>
+    <header>
+      <p className="m-0 font-serif text-2xl text-vermilion-700 tracking-wide">
+        緣 <span className="text-ink-900">매칭 피드</span>
+      </p>
+      <p className="mt-1 text-sm text-ink-500">
+        사주로 풀어본 궁합 후보예요. 점수 높은 순으로 정렬됩니다.
+      </p>
+    </header>
   );
 }
 
-const S = {
-  main: {
-    padding: 32,
-    fontFamily: "system-ui",
-    maxWidth: 720,
-    margin: "0 auto",
-  },
-  help: { fontSize: 13, color: "#666" },
-  error: { color: "crimson" },
-  card: {
-    padding: 16,
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    background: "#fff",
-  },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  h2: { fontSize: 18, marginTop: 0, marginBottom: 4 },
-  badge: {
-    display: "inline-block",
-    padding: "2px 8px",
-    fontSize: 11,
-    border: "1px solid #ddd",
-    borderRadius: 4,
-    background: "#fff",
-  },
-  scoreBox: { textAlign: "right" as const },
-  scoreLabel: { fontSize: 11, color: "#666", margin: 0 },
-  scoreValue: {
-    fontSize: 28,
-    fontWeight: 700,
-    margin: "2px 0 0",
-    lineHeight: 1,
-  },
-  breakdownGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 8,
-    marginBottom: 12,
-  },
-  metric: {
-    padding: 8,
-    background: "#f9fafb",
-    borderRadius: 6,
-    textAlign: "center" as const,
-  },
-  metricLabel: { fontSize: 11, color: "#666", margin: 0 },
-  metricValue: { fontSize: 14, fontWeight: 600, margin: "2px 0 0" },
-  cardFooter: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap" as const,
-  },
-  linkBtn: {
-    padding: "6px 12px",
-    border: "1px solid #000",
-    borderRadius: 6,
-    textDecoration: "none",
-    color: "#000",
-    background: "#fff",
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  actionBtn: {
-    padding: "6px 12px",
-    border: "1px solid",
-    borderRadius: 6,
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  primaryLink: {
-    display: "inline-block",
-    marginTop: 12,
-    padding: "8px 12px",
-    border: "1px solid #000",
-    borderRadius: 6,
-    textDecoration: "none",
-    color: "#000",
-  },
-} as const;
+function EmptyCard({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <section className="mt-4 rounded-lg border border-dashed border-hanji-300 bg-hanji-50 p-6 text-center">
+      <p className="m-0 font-serif text-lg text-ink-900">{title}</p>
+      <p className="mt-2 text-sm text-ink-500">{description}</p>
+      {action && <div className="mt-4">{action}</div>}
+    </section>
+  );
+}
+
+const GAUGE_MAX = 25;
+
+function Gauge({ label, value }: { label: string; value: number }) {
+  const pct = Math.max(0, Math.min(100, (value / GAUGE_MAX) * 100));
+  const tone =
+    value >= 18
+      ? "bg-jade-600"
+      : value >= 12
+        ? "bg-vermilion-500"
+        : value >= 6
+          ? "bg-amber-600"
+          : "bg-ink-400";
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="w-16 shrink-0 text-[12px] text-ink-600">{label}</span>
+      <div
+        className="relative h-2 flex-1 overflow-hidden rounded-full bg-hanji-200"
+        role="progressbar"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={GAUGE_MAX}
+      >
+        <div
+          className={`h-full rounded-full ${tone} transition-[width] duration-500`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="tabular w-9 shrink-0 text-right text-[12px] font-semibold text-ink-700">
+        {value.toFixed(1)}
+      </span>
+    </div>
+  );
+}
