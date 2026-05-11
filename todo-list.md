@@ -9,8 +9,8 @@
 - [x] 로컬 Docker (Postgres + Redis) 점검
 - [x] 앱 이름 확정 (saju)
 - [x] GitHub 레포 생성 (로컬 git init 완료, push는 나중)
-- [ ] 구글 OAuth 콘솔 등록 → CLIENT_ID/SECRET 발급
-- [ ] AI 프록시 API 키 받아서 .env에 채우기
+- [x] 구글 OAuth 콘솔 등록 → CLIENT_ID/SECRET 발급 (dev 환경 한정, prod 도메인 redirect URI는 배포 단계)
+- [x] AI 프록시 API 키 받아서 .env에 채우기 (`AI_PROXY_API_KEY` backend/.env)
 
 ## Day 1 오전 - 모노레포 + 인프라 + 핵심 스키마
 
@@ -208,8 +208,59 @@
 - [x] 홈 네비 링크 5개 (사주 입력 / 내 풀이 / 오늘의 운세 / 매칭 피드 / 채팅방)
 - [x] e2e 검증: Alice/Bob 2탭 양방향 실시간 송수신 + markRoomRead로 unread 자동 해제
 
-#### 마무리 ⏳
-- [ ] 로그인 페이지 prod 디자인 (현재 임시 버튼만)
+#### 마무리 ✅
+- [x] 로그인 페이지 prod 디자인 (D2b — 커밋 363bdde, 한지 배경 + 緣 워드마크 + Google 버튼 + dev-login 점선 박스 + 3중 가드)
+
+### Day 3 오후 - 디자인 패스 + 버그 추격
+
+디자인 토대부터 채팅 UX까지 점진적 패스. 인라인 `const S` → Tailwind v4 토큰 마이그레이션, "한지·먹·주홍" 디자인 시스템 정착, 도중 추적된 unread/jobId 버그 추적.
+
+#### Block D1: Tailwind v4 + 디자인 토큰 ✅ (커밋 c27c159)
+- [x] postcss.config.mjs + globals.css @theme (한지/먹/주홍/jade/amber/crimson + Pretendard CDN + radius)
+- [x] layout.tsx import + metadata 다듬기
+
+#### Block D2a: 글로벌 하단 탭바 + 매칭 빈 상태 ✅ (커밋 ece4939)
+- [x] BottomNav 5탭 (홈/사주/풀이/매칭/채팅) — usePathname 활성 표시, /login self-hide
+- [x] MatchesView 빈 상태 hasSaju 분기, 인라인 "홈으로" 링크 제거
+
+#### Block D-Bugfix: BullMQ 재실행 버그 ✅ (커밋 8b3573a)
+- [x] 사주 재제출 시 status pending 영구 갇힘 + 화면 무한 폴링 root cause 추적
+- [x] enqueueProfileReading / DailyFortune / MatchCurate 모두 `queue.remove(jobId)` 후 `add` 패턴
+- [x] DB 보정: pending 갇혀있던 reading 2건 `status='completed'` UPDATE
+
+#### Block D5: 매칭 피드·상세 4-metric 게이지 시각화 ✅ (커밋 bc179fd)
+- [x] MatchesView 인라인 `const S` 제거, 4-metric Gauge 컴포넌트 (≥18 jade / ≥12 vermilion / ≥6 amber / else ink)
+- [x] MatchDetailView hero(상태별 색상) + 큰 점수(본명조 60px) + AI 풀이 5섹션 컬러 코딩(jade/amber/vermilion/ink)
+- [x] ProgressCard 3-dot 펄스, 모바일 sticky 액션바
+
+#### Block D4: 채팅방 카톡풍 버블 ✅ (커밋 d79076e)
+- [x] 본인 vermilion-500 / 상대 white+border, 꼬리 라디우스 4px
+- [x] `buildRenderItems` 헬퍼로 day separator + system + bubble 시퀀스 변환
+- [x] 그룹화 1분 윈도우 (발신자 이름 첫 버블만, 시간 그룹 마지막만)
+- [x] sticky 헤더 + sticky composer (textarea auto-grow, 최대 120px)
+
+#### Block D-Bugfix-2: unreadByMe 본인 발신자 체크 누락 ✅ (커밋 5b7113b)
+- [x] `chat_rooms`에 `last_message_sender_id` 컬럼 추가 (drizzle migration `20260511053138`)
+- [x] sendMessage + match_intro system msg 인서트 시 같이 박기
+- [x] `unreadByMe` resolver: 본인이 마지막 발신자면 `false`
+- [x] 기존 row 1건 보정 (`DISTINCT ON`으로 messages 마지막 발신자 끌어옴)
+- [x] 부수: match_intro 직후 `lastMessageAt` 미갱신도 같이 fix
+
+#### Block D-Home-Remove: 홈 탭 제거 + 라우팅 + UserMenu ✅ (커밋 4ed95f0)
+- [x] BottomNav 5탭 → 4탭 (사주/풀이/매칭/채팅)
+- [x] `/` page redirect-only (미로그인 → /login, 로그인 → /matches)
+- [x] 글로벌 UserMenu (layout.tsx `fixed top-right`, 사용자 이름 + 이메일 + 로그아웃 dropdown)
+
+#### Block D-Home-Remove-Fix: BottomNav 시각 분리 ✅ (커밋 cb787b1)
+- [x] `hanji-50/95` → `white/98` + `border-ink-200` + 상단 그림자 `0_-4px_12px_rgba(28,25,23,0.06)`
+- [x] 채팅방 composer 한지 톤과 BottomNav 흰 톤 명확 위계 분리
+- [x] 부수: Next dev SSR stale cache 인지 (.next 캐시 + 쿠키 클리어 절차 학습)
+
+#### 잔여 디자인 작업 ⏳
+- [ ] **D-Matches-Widget** `/matches` 상단 오늘 운세 한 줄 + 미응답 채팅 N건 위젯 (데일리 진입점)
+- [ ] **D-extra** ChatListView 인라인 `const S` → Tailwind 토큰 + unread dot 톤 vermilion 통일
+- [ ] **D6** SajuForm 10필드 step/section 분할 + 진행 인디케이터
+- [ ] **D7** ReadingView/FortuneView pending/generating/completed/failed UI 통일 (D5 ProgressCard 패턴 재사용)
 
 ### 배포
 
@@ -237,7 +288,7 @@
 ### 01-typescript-boost
 - [x] §6 tsconfig strict + noUncheckedIndexedAccess (이미 설정됨)
 - [x] §2 typeof + infer ($inferSelect/Insert로 schema/users.ts에서 사용 중)
-- [ ] §1 Generic (Pothos builder에서 자연스럽게 사용) ← Day 2
+- [x] §1 Generic (Pothos `builder.objectRef<T>()` 5건 — ScoreBreakdown/CompatibilitySummary/ReadingSections/DailyFortuneSections/FiveElements + builder 자체 generic)
 - [x] §3 satisfies (env.ts에서 zod parse 활용; satisfies는 Day 2 builder에서 추가)
 - [x] §5 Branded type (UserId, MatchId, ChatRoomId, MessageId 등 packages/shared/src/types.ts)
 
@@ -298,20 +349,25 @@
 
 ## 진행 통계 (현재 시점)
 
-- 사전 준비: 4/6 완료
+- 사전 준비: 6/6 완료 ✅ (dev 환경 한정 — prod 도메인 OAuth redirect URI는 배포 단계)
 - Day 1 오전: 10/10 완료 ✅
 - Day 1 오후: 18/19 완료 ✅ (FlowProducer는 콜백 enqueue로 대체)
 - Day 2 오전: 11/11 완료 ✅
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
-- Day 3 오후: 13/13 완료 ✅ (Block 1~7: 인프라 + 폼 + 풀이/운세 + 매칭 + 채팅) — 마무리(로그인 prod 디자인) 1건 + 배포 잔여
+- Day 3 오후 (Block 1~7): 13/13 완료 ✅ + 마무리 1/1 ✅ (D2b)
+- Day 3 오후 디자인 패스 + 버그 추격: 8/12 완료 (잔여 4건 D-Matches-Widget / D-extra / D6 / D7)
+- 배포: 0/7
 - 출시 직후: 0/4
 
-**전체: 79/86 = 92% 진행**
+**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 8/12 — 잔여 디자인 4건, 배포 7건, 출시 직후 4건
 
-> 📝 **다음 세션 시작점**: 마무리 (로그인 페이지 prod 디자인) → 배포 (시드 스크립트 + OCI Docker Compose + Vercel)
+> 📝 **다음 세션 시작점**:
+> 1. (선호) 디자인 잔여 4건 중 선택 — D-Matches-Widget (데일리 진입점) / D-extra (채팅 리스트 톤 통일) / D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
+> 2. (대안) 배포 단계 진입 — 시드 스크립트 통합 → OCI Docker Compose → Vercel
 >
-> 직전 커밋: `3295f31 feat(frontend): 매칭 피드 + 매칭 상세 페이지 — Day 3 오후 Block 6` → Block 7 통합 커밋 추가 예정
+> 직전 커밋: `cb787b1 feat(frontend): BottomNav 톤 흰색+그림자로 분리 — 채팅방 composer와 시각 융합 차단`
+> origin/main 보다 11 commits ahead (D1 ~ D-Home-Remove-Fix, 디자인 패스 + 버그픽스)
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 
@@ -321,3 +377,21 @@ typecheck/단위테스트 통과만 보고 끝낸 게 아니라 e2e 시연 한 �
 2. drizzle 1.0의 RQB는 `where` 콜백 형태(`(t, ops) => ne(t.id, x)`) 폐기, 객체 패턴(`{ NOT: { id: x } }`)만 지원
 3. drizzleField resolve의 `as ReturnType<...>` 캐스팅이 exactOptionalPropertyTypes와 충돌 → `await + null check` 패턴으로 통일
 4. **BullMQ 5.x: jobId에 콜론 포함 시 정확히 3토큰만 허용** (e2e 시연 안 했으면 못 잡았을 함정 — `match-curate:<uid>` → `match-curate:<uid>:v1`)
+
+## Day 3 오후 — 디자인 패스 + 버그 추격 회고
+
+디자인 작업 중에 typecheck/단위테스트는 통과해도 실제 e2e 흐름에서 드러난 함정들:
+
+1. **BullMQ deterministic jobId 재실행 함정** (D-Bugfix) — `queue.add(name, data, { jobId })` 같은 jobId 두 번째 호출은 silent ignore. 재실행 필요 시 반드시 `queue.remove(jobId)` 먼저. Celery `task.delay(task_id=...)` 와 동일 dedup 패턴. 사주 재제출이 status 영구 갇히는 증상으로 드러남.
+
+2. **unreadByMe 데이터 모델 누락** (D-Bugfix-2) — 채팅방 row 에 `lastMessageAt` 만 있고 "마지막 메시지 발신자" 가 없어서 본인 발신 시에도 unread=true 가 나오던 버그. row level 메타데이터 자체가 부정확했음 → `last_message_sender_id` 컬럼 추가가 정도. resolver 한 줄 추가는 그 후. 데이터 모델 부정확 → resolver 우회 패턴 안티패턴.
+
+3. **시각 위계 융합** (D-Home-Remove-Fix) — 같은 톤(hanji-50/95) 의 두 panel 이 가는 border 하나로만 분리되면 사용자가 둘을 한 덩어리로 인식. "BottomNav 가 사라졌다" 라는 인지 오류로 나타남. 흰색 + 그림자로 위계 분리하면 인지 즉시 회복.
+
+4. **Next dev 서버 SSR stale cache** (D-Home-Remove-Fix 부수) — layout.tsx 같은 글로벌 컴포넌트 className 변경 시 hydration mismatch 가 console 에 남고 시각적으로도 옛 className 이 그려질 수 있음. 해소 절차: `.next` 삭제 + dev 서버 재기동 + 브라우저 쿠키/캐시 비우기.
+
+5. **카톡식 데이터 모델은 "방 단위 last-read timestamp" 충분** — 메시지 row 에 read boolean 안 박는다. `chat_rooms.read_by_a/b` timestamp 만으로 unread/N개/1 표시 다 가능. 1:1 대화에 메시지 단위 read receipt 는 over-engineering.
+
+6. **Tailwind v4 vs v3 차이** (D1) — `tailwind.config.js` 없음, 모든 설정 CSS `@theme` 블록. `@import "tailwindcss"` 한 줄로 base/components/utilities 통합. CSS 변수 `--color-X-Y` 선언하면 자동으로 `bg-X-Y` / `text-X-Y` / `border-X-Y` 유틸리티 생성.
+
+7. **블록 단위 + GO 신호 대기 + cancelled todo 차단** — pending todo 가 남으면 시스템 디렉티브 자동 재진행이 트리거됨. 사용자 의사 (블록 단위, GO 신호 대기) 와 충돌 시 todo 를 `cancelled` 로 명시 마킹해야 차단됨. 새 블록 들어갈 때만 새 todo 생성.
