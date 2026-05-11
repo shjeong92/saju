@@ -283,7 +283,29 @@
 - [x] aria-label 접근성 ("Bob와의 채팅방, 미응답 메시지 있음")
 - [x] `userId: ...` 디버그 라인 제거 (개발 잔재)
 - [x] 검증: Playwright computed style — unread 0 (border ink-200 + dot 없음) / unread 1 (border vermilion oklab + dot rgb(194,65,12) 8x8) + 헤더 폰트 "Noto Serif KR" + 컬러 vermilion-700
-- [ ] **D6** SajuForm 10필드 step/section 분할 + 진행 인디케이터
+**Block D6** SajuForm 토큰화 + step wizard 3단계 분할 ✅
+- [x] 인라인 `const S` 전체 제거 → Tailwind 토큰 마이그레이션
+- [x] 헤더 패턴 통일 ("卦 사주 입력" + 본명조 vermilion-700, 다른 페이지 緣/話/占 패턴과 일관)
+- [x] 진정한 **step wizard 패턴** (single-screen 동시 표시가 아닌 한 번에 한 step 만 노출):
+  - Step 1: 기본 정보 (닉네임 + 한 줄 소개)
+  - Step 2: 생년월일시 (생년월일/출생 시각/달력/성별/출생지)
+  - Step 3: 매칭 선호도 (관심 성별 + 연령 범위)
+- [x] `StepIndicator` 컴포넌트: 3 동그라미 + 연결선
+  - 대기 step: white + ink-200 border + ink-400 text
+  - 현재 step: vermilion-50 bg + vermilion-500 border + vermilion-700 text (aria-current="step")
+  - 완료 step: jade-600 bg + ✓ 텍스트 + jade-600 연결선
+- [x] 다음 / 이전 버튼 흐름:
+  - 다음 버튼: 현재 step 필수 필드 충족 시만 활성, 마지막 step 에선 hide
+  - 이전 버튼: step 1 에선 hide, step 2/3 에서만 노출
+  - 제출 버튼: 마지막 step 에서만 노출, valid 시만 활성
+- [x] `setStep()` + 단일 FormState 객체 → step 전환 시에도 이전 step 입력값 보존
+- [x] step 전환 시 `window.scrollTo({ top: 0, behavior: smooth })` (모바일 핫스팟 인지)
+- [x] `autoFocus` 으로 step 진입 시 첫 필수 필드 즉시 입력 가능
+- [x] 부족 안내: 다음 비활성 상태에서 "닉네임을 입력해 주세요" 등 명시
+- [x] handleSubmit 안전망: form submit 이뤄지더라도 각 step 재검증 + 부족 step 으로 자동 복귀
+- [x] `PillRadioGroup` 컴포넌트: 흑백 라디오 → vermilion pill 토글 (role="radio" + aria-checked 접근성)
+- [x] Input/Textarea 포커스 링: `focus:border-vermilion-500 focus:ring-vermilion-500/20`
+- [x] 검증: Playwright — step 1 (이전 hide, 다음 disabled, "닉네임 입력해 주세요") → 닉네임 입력 → 다음 활성 vermilion-500 → click → step 2 (✓ jade-600 + 2 vermilion-50 + 3 white, 이전 노출) → 생년월일 입력 → step 3 (✓ ✓ + 3 vermilion-50, 제출 활성) → 이전 click → step 2 데이터 보존 ✓ + frontend typecheck 0
 - [ ] **D7** ReadingView/FortuneView pending/generating/completed/failed UI 통일 (D5 ProgressCard 패턴 재사용)
 
 ### 배포
@@ -380,18 +402,18 @@
 - Day 2 오후: 13/13 완료 ✅
 - Day 3 오전: 10/10 완료 ✅
 - Day 3 오후 (Block 1~7): 13/13 완료 ✅ + 마무리 1/1 ✅ (D2b)
-- Day 3 오후 디자인 패스 + 버그 추격: 10/12 완료 (잔여 2건 D6 / D7)
+- Day 3 오후 디자인 패스 + 버그 추격: 11/12 완료 (잔여 1건 D7)
 - 배포: 0/7
 - 출시 직후: 0/4
 
-**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 10/12 — 잔여 디자인 2건, 배포 7건, 출시 직후 4건
+**진행 요약**: MVP 코어(인프라 + 도메인 + GraphQL + 워커 + 프론트 7 블록) 100% ✅ + Day 3 디자인 패스 11/12 — 잔여 디자인 1건, 배포 7건, 출시 직후 4건
 
 > 📝 **다음 세션 시작점**:
-> 1. (선호) 디자인 잔여 2건 중 선택 — D6 (사주 폼 step) / D7 (풀이·운세 status 통일)
+> 1. (선호) D7 (Reading/Fortune status UI 통일)
 > 2. (대안) 배포 단계 진입 — 시드 스크립트 통합 → OCI Docker Compose → Vercel
 >
-> 직전 커밋: `0fe2d5f feat(frontend): /matches 데일리 진입점 위젯 — Block D-Matches-Widget`
-> origin/main 보다 14 commits ahead (D1 ~ D-extra, 디자인 패스 + 버그픽스)
+> 직전 커밋 (예정): `feat(frontend): SajuForm 토큰화 + step wizard — Block D6`
+> origin/main 보다 15 commits ahead (D1 ~ D6, 디자인 패스 + 버그픽스)
 
 ## Day 2 오후 — 잡은 진짜 버그 회고
 
