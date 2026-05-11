@@ -3,7 +3,7 @@
 # Build context: repo root.
 # 예) docker build -f backend/Dockerfile.migrate -t saju-migrate .
 
-FROM oven/bun:1.1-alpine
+FROM oven/bun:1.3-alpine
 WORKDIR /app/backend
 
 ENV NODE_ENV=production
