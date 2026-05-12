@@ -20,7 +20,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: ghcr.io/shjeong92/saju-migrate:fa214a9
+          image: ghcr.io/shjeong92/saju-migrate:f47b25a
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:
