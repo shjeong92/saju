@@ -41,36 +41,13 @@ type UpsertResponse = {
   };
 };
 
-function normalizeUrl(v: string | null | undefined): string | null {
-  if (typeof v !== "string") return null;
-  const trimmed = v.trim();
-  if (trimmed.length === 0) return null;
-  try {
-    new URL(trimmed);
-    return trimmed;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeEmail(v: string | null | undefined): string | null {
-  if (typeof v !== "string") return null;
-  const trimmed = v.trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
-
 async function upsertToBackend(
   payload: UpsertPayload,
 ): Promise<UpsertResponse> {
-  const normalized: UpsertPayload = {
-    ...payload,
-    email: normalizeEmail(payload.email),
-    imageUrl: normalizeUrl(payload.imageUrl),
-  };
   const res = await fetch(`${apiUrl}/auth/upsert`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(normalized),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -139,8 +116,6 @@ if (allowDevLogin) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers,
-  // TODO: production 안정화 후 제거. AccessDenied 원인 추적용 디버그 로그.
-  debug: true,
   callbacks: {
     ...authConfig.callbacks,
     /**
@@ -150,46 +125,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      * Credentials provider 는 authorize 에서 이미 처리했으므로 skip.
      */
     signIn: async ({ user, account, profile }) => {
-      if (!account) {
-        console.error("[auth] signIn: account missing");
-        return false;
-      }
+      if (!account) return false;
 
       if (account.provider === "google") {
-        // NextAuth v5 beta 의 Google provider 는 시나리오에 따라 profile.sub 가
-        // 비어 들어오는 경우가 있다 (예: prompt=none, authuser=N multi-account).
-        // account.providerAccountId 는 NextAuth 가 항상 채워주는 안정적인 필드이며
-        // Google 의 경우 sub 와 동일하다. fallback 순서로 안전하게 처리.
-        const providerId =
-          account.providerAccountId ??
-          (typeof profile?.sub === "string" ? profile.sub : null);
-
-        if (!providerId) {
-          console.error("[auth] google providerId missing", {
-            providerAccountId: account.providerAccountId,
-            profileSub: profile?.sub,
-          });
+        if (!profile?.sub) {
+          console.error("[auth] google profile.sub missing");
           return false;
         }
-
-        const payload: UpsertPayload = {
-          provider: "google",
-          providerId,
-          name: user.name ?? profile?.name ?? "구글 사용자",
-          email: user.email ?? profile?.email ?? null,
-          imageUrl: user.image ?? profile?.picture ?? null,
-        };
         try {
-          const result = await upsertToBackend(payload);
+          const result = await upsertToBackend({
+            provider: "google",
+            providerId: profile.sub,
+            name: user.name ?? profile.name ?? "구글 사용자",
+            email: user.email ?? profile.email ?? null,
+            imageUrl: user.image ?? profile.picture ?? null,
+          });
           user.backendToken = result.token;
           user.backendUserId = result.user.id;
           return true;
         } catch (err) {
-          console.error("[auth] google upsert failed:", {
-            error: err instanceof Error ? err.message : String(err),
-            payload,
-            apiUrl,
-          });
+          console.error("[auth] google upsert failed:", err);
           return false;
         }
       }

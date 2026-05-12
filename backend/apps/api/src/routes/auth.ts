@@ -10,15 +10,9 @@ import type { AppEnv } from "../types.ts";
 const upsertSchema = z.object({
   provider: z.literal("google"),
   providerId: z.string().min(1),
-  email: z
-    .union([z.string().email(), z.literal(""), z.null()])
-    .optional()
-    .transform((v) => (v === "" || v == null ? null : v)),
+  email: z.string().email().nullable().optional(),
   name: z.string().min(1),
-  imageUrl: z
-    .union([z.string().url(), z.literal(""), z.null()])
-    .optional()
-    .transform((v) => (v === "" || v == null ? null : v)),
+  imageUrl: z.string().url().nullable().optional(),
 });
 
 export const authRoutes = new Hono<AppEnv>().post(
