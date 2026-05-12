@@ -10,7 +10,6 @@ const MY_READING = graphql(`
     myReading {
       id
       status
-      version
       sections {
         overview
         career
@@ -86,7 +85,6 @@ export function ReadingView() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-8">
       <Header />
-      <p className="mt-1 text-xs text-ink-500">버전: {reading.version}</p>
 
       {reading.status === "pending" && (
         <ProgressCard
