@@ -35,7 +35,7 @@ saju/
 운영 배포는 K3s + ArgoCD GitOps. 자세한 절차는 [`infra/k3s-manifests/README.md`](infra/k3s-manifests/README.md) 참고.
 
 - API: `https://api.botfolio.cc` (K3s, multi-arch GHCR 이미지)
-- Web: `https://saju-web.vercel.app` (Vercel, 프로젝트명에 따라 다를 수 있음)
+- Web: `https://saju-web-steel.vercel.app` (Vercel, GitHub Actions 자동 배포)
 
 ## Development
 
