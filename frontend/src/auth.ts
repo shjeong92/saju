@@ -41,13 +41,36 @@ type UpsertResponse = {
   };
 };
 
+function normalizeUrl(v: string | null | undefined): string | null {
+  if (typeof v !== "string") return null;
+  const trimmed = v.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    new URL(trimmed);
+    return trimmed;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeEmail(v: string | null | undefined): string | null {
+  if (typeof v !== "string") return null;
+  const trimmed = v.trim();
+  return trimmed.length === 0 ? null : trimmed;
+}
+
 async function upsertToBackend(
   payload: UpsertPayload,
 ): Promise<UpsertResponse> {
+  const normalized: UpsertPayload = {
+    ...payload,
+    email: normalizeEmail(payload.email),
+    imageUrl: normalizeUrl(payload.imageUrl),
+  };
   const res = await fetch(`${apiUrl}/auth/upsert`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(normalized),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -125,26 +148,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      * Credentials provider 는 authorize 에서 이미 처리했으므로 skip.
      */
     signIn: async ({ user, account, profile }) => {
-      if (!account) return false;
+      if (!account) {
+        console.error("[auth] signIn: account missing");
+        return false;
+      }
 
       if (account.provider === "google") {
         if (!profile?.sub) {
-          console.error("[auth] google profile.sub missing");
+          console.error("[auth] google profile.sub missing", { profile });
           return false;
         }
+        const payload: UpsertPayload = {
+          provider: "google",
+          providerId: profile.sub,
+          name: user.name ?? profile.name ?? "구글 사용자",
+          email: user.email ?? profile.email ?? null,
+          imageUrl: user.image ?? profile.picture ?? null,
+        };
         try {
-          const result = await upsertToBackend({
-            provider: "google",
-            providerId: profile.sub,
-            name: user.name ?? profile.name ?? "구글 사용자",
-            email: user.email ?? profile.email ?? null,
-            imageUrl: user.image ?? profile.picture ?? null,
-          });
+          const result = await upsertToBackend(payload);
           user.backendToken = result.token;
           user.backendUserId = result.user.id;
           return true;
         } catch (err) {
-          console.error("[auth] google upsert failed:", err);
+          console.error("[auth] google upsert failed:", {
+            error: err instanceof Error ? err.message : String(err),
+            payload,
+            apiUrl,
+          });
           return false;
         }
       }
