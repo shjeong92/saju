@@ -22,7 +22,7 @@ spec:
         kubernetes.io/hostname: k3s-master-vnic
       containers:
         - name: migrate
-          image: ghcr.io/shjeong92/saju-migrate:f47b25a
+          image: ghcr.io/shjeong92/saju-migrate:ef9e59c
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

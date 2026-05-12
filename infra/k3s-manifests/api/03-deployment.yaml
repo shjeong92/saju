@@ -22,7 +22,7 @@ spec:
         kubernetes.io/hostname: k3s-master-vnic
       containers:
         - name: api
-          image: ghcr.io/shjeong92/saju-api:f47b25a
+          image: ghcr.io/shjeong92/saju-api:ef9e59c
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000

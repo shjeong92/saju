@@ -22,7 +22,7 @@ spec:
         kubernetes.io/hostname: k3s-master-vnic
       containers:
         - name: worker
-          image: ghcr.io/shjeong92/saju-worker:f47b25a
+          image: ghcr.io/shjeong92/saju-worker:ef9e59c
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
