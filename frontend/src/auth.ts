@@ -20,7 +20,11 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { authConfig } from "./auth.config";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// `??` 가 아니라 `||` 인 이유: Vercel env 에 빈 문자열(공백/줄바꿈 포함)이
+// 잘못 저장돼도 fallback 으로 떨어지게 한다. 과거 NEXT_PUBLIC_API_URL=""
+// 가 그대로 박혀 `fetch("/auth/upsert")` → ERR_INVALID_URL → AccessDenied
+// 로 한참 헤맨 적이 있어서, 같은 트랩에 두 번 빠지지 않도록 가드.
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:4000";
 const allowDevLogin = process.env.AUTH_ALLOW_DEV_LOGIN === "true";
 
 type UpsertPayload = {
