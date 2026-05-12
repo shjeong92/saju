@@ -139,6 +139,8 @@ if (allowDevLogin) {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers,
+  // TODO: production 안정화 후 제거. AccessDenied 원인 추적용 디버그 로그.
+  debug: true,
   callbacks: {
     ...authConfig.callbacks,
     /**
