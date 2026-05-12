@@ -18,6 +18,8 @@ spec:
       labels:
         app: api
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-master-vnic
       containers:
         - name: api
           image: ghcr.io/shjeong92/saju-api:f47b25a

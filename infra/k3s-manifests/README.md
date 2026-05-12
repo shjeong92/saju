@@ -190,5 +190,6 @@ Loki/Grafana 가 promtail 로 자동 수집. `grafana.botfolio.cc` 에서:
 | Ingress 만들었는데 `certificate not ready` | `kubectl -n saju describe certificate saju-api-tls`. DNS A record 가 외부에서 보이는지, traefik http01 challenge 가 80 포트로 들어오는지 확인 |
 | api Pod `CrashLoopBackOff` | `kubectl -n saju logs deploy/api`. env validation(@saju/shared/env) 실패 가능성 — DATABASE_URL/REDIS_URL/JWT_SECRET 확인 |
 | migrate Job 무한 Retry | drizzle-kit migrate 가 schema 충돌 시 실패. `kubectl -n saju logs job/api-migrate` 로 SQL 에러 확인 |
+| migrate Pod stdout 0줄로 hang | `celery-worker-*` 노드에서 master 노드의 postgres pod 로 cross-node 통신이 안 되는 OCI VNIC 이슈. 현재는 `kubernetes.io/hostname: k3s-master-vnic` nodeSelector 로 모든 saju pod 를 master 에 강제 스케줄링하여 우회. 근본 해결하려면 flannel/iptables/MTU 조사 필요 |
 | GHCR pull 403 | 이미지가 private 인데 imagePullSecret 누락. 위 4단계 ghcr-pull secret 참조 |
 | ArgoCD Application `OutOfSync` 안 풀림 | `argocd-repo-server` 상태 확인. `kubectl -n argocd rollout restart deploy/argocd-repo-server` |
