@@ -37,6 +37,11 @@ jobs:
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: GraphQL Codegen
+        env:
+          NEXT_PUBLIC_GRAPHQL_URL: https://api.botfolio.cc/graphql
+        run: bun run codegen
+
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
