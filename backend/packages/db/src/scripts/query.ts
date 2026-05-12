@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import * as drizzleOrm from "drizzle-orm";
 import * as schema from "../schema/index.ts";
 import { relations } from "../schema/relations.ts";
@@ -23,7 +23,7 @@ if (!url) {
   process.exit(1);
 }
 
-const client = postgres(url, { max: 2 });
+const client = new pg.Pool({ connectionString: url, max: 2 });
 const db = drizzle({ client, relations, logger: true });
 
 const ctx = {

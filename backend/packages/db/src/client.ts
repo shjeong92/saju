@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import * as schema from "./schema/index.ts";
 import { relations } from "./schema/relations.ts";
 
@@ -16,7 +16,7 @@ function readDatabaseUrl(): string {
 }
 
 export function createDb(databaseUrl: string = readDatabaseUrl()) {
-  const client = postgres(databaseUrl, { max: 10 });
+  const client = new pg.Pool({ connectionString: databaseUrl, max: 10 });
   return drizzle({ client, relations });
 }
 
