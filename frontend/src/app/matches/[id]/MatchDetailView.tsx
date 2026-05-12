@@ -17,7 +17,7 @@ const MATCH_DETAIL = graphql(`
       theyLiked
       partner {
         id
-        name
+        displayName
         imageUrl
       }
       breakdown {
@@ -202,7 +202,7 @@ export function MatchDetailView({ matchId }: { matchId: string }) {
             {meta.label}
           </span>
           <h1 className="mt-3 mb-0 font-serif text-3xl text-ink-900">
-            {match.partner.name}
+            {match.partner.displayName}
           </h1>
           <p className="mt-4 mb-0 text-[11px] text-ink-500">궁합 점수</p>
           <p

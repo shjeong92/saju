@@ -11,7 +11,7 @@ const ME_QUERY = graphql(`
   query Me {
     me {
       id
-      name
+      displayName
       email
     }
   }
@@ -28,7 +28,7 @@ const CHAT_ROOM_QUERY = graphql(`
         createdAt
         sender {
           id
-          name
+          displayName
         }
       }
     }
@@ -47,14 +47,14 @@ const SEND_MESSAGE = graphql(`
 
 const MESSAGE_ADDED_SUB = graphql(`
   subscription MessageAdded($roomId: ID!) {
-    messageAdded(roomId: $roomId) {
+      messageAdded(roomId: $roomId) {
       id
       body
       type
       createdAt
       sender {
         id
-        name
+        displayName
       }
     }
   }
@@ -124,7 +124,7 @@ export function DevPlayground({ userId }: { userId: string }) {
           <ul style={{ paddingLeft: 16 }}>
             {roomRes.data.chatRoom.messages.map((m) => (
               <li key={m.id}>
-                <b>{m.sender?.name ?? "(unknown)"}</b> [{m.type}]: {m.body}
+                <b>{m.sender?.displayName ?? "(unknown)"}</b> [{m.type}]: {m.body}
               </li>
             ))}
           </ul>
@@ -157,7 +157,7 @@ export function DevPlayground({ userId }: { userId: string }) {
           <ul style={{ paddingLeft: 16 }}>
             {liveMessages.map((m) => (
               <li key={m.id}>
-                <b>{m.sender?.name ?? "(unknown)"}</b> [{m.type}]: {m.body}{" "}
+                <b>{m.sender?.displayName ?? "(unknown)"}</b> [{m.type}]: {m.body}{" "}
                 <span style={{ fontSize: 11, color: "#888" }}>
                   {String(m.createdAt)}
                 </span>

@@ -30,7 +30,6 @@ export default async function RootLayout({
           {session?.user && (
             <>
               <UserMenu
-                name={session.user.name ?? "사용자"}
                 email={session.user.email ?? null}
                 signOutAction={signOutAction}
               />

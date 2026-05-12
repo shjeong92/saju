@@ -13,7 +13,7 @@ const MY_CHAT_ROOMS_QUERY = graphql(`
       unreadByMe
       partner {
         id
-        name
+        displayName
         imageUrl
       }
     }
@@ -63,8 +63,8 @@ export function ChatListView({ currentUserId: _currentUserId }: { currentUserId:
                 onClick={() => router.push(`/chat/${room.id}`)}
                 aria-label={
                   unread
-                    ? `${room.partner.name}와의 채팅방, 미응답 메시지 있음`
-                    : `${room.partner.name}와의 채팅방`
+                    ? `${room.partner.displayName}와의 채팅방, 미응답 메시지 있음`
+                    : `${room.partner.displayName}와의 채팅방`
                 }
                 className={[
                   "w-full rounded-lg border bg-white p-4 text-left shadow-[0_1px_2px_rgba(28,25,23,0.04)] transition-colors hover:bg-hanji-50",
@@ -75,7 +75,7 @@ export function ChatListView({ currentUserId: _currentUserId }: { currentUserId:
               >
                 <header className="flex items-center justify-between gap-3">
                   <h2 className="m-0 truncate font-serif text-lg text-ink-900">
-                    {room.partner.name}
+                    {room.partner.displayName}
                   </h2>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="tabular text-[12px] text-ink-500">

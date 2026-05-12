@@ -43,7 +43,7 @@ const MATCHES_QUERY = graphql(`
       theyLiked
       partner {
         id
-        name
+        displayName
         imageUrl
       }
       breakdown {
@@ -271,7 +271,7 @@ export function MatchesView() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h2 className="m-0 truncate font-serif text-xl text-ink-900">
-                        {match.partner.name}
+                        {match.partner.displayName}
                       </h2>
                       <span
                         className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${meta.textClass} ${meta.bgClass} ${meta.borderClass}`}

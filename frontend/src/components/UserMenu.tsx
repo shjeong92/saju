@@ -2,16 +2,30 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "urql";
+import { graphql } from "@/gql";
+
+const ME_DISPLAY_NAME_QUERY = graphql(`
+  query MeDisplayName {
+    me {
+      id
+      displayName
+    }
+  }
+`);
 
 export function UserMenu({
-  name,
   email,
   signOutAction,
 }: {
-  name: string;
   email: string | null;
   signOutAction: () => Promise<void>;
 }) {
+  const [{ data }] = useQuery({
+    query: ME_DISPLAY_NAME_QUERY,
+    requestPolicy: "cache-and-network",
+  });
+  const name = data?.me?.displayName ?? "사용자";
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

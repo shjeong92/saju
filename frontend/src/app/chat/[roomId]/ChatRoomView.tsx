@@ -12,7 +12,7 @@ const CHAT_ROOM_DETAIL_QUERY = graphql(`
       id
       partner {
         id
-        name
+        displayName
         imageUrl
       }
       messages {
@@ -22,7 +22,7 @@ const CHAT_ROOM_DETAIL_QUERY = graphql(`
         createdAt
         sender {
           id
-          name
+          displayName
         }
       }
     }
@@ -38,7 +38,7 @@ const SEND_ROOM_MESSAGE = graphql(`
       createdAt
       sender {
         id
-        name
+        displayName
       }
     }
   }
@@ -61,7 +61,7 @@ const ROOM_MESSAGE_ADDED_SUB = graphql(`
       createdAt
       sender {
         id
-        name
+        displayName
       }
     }
   }
@@ -206,7 +206,7 @@ export function ChatRoomView({
             ←
           </Link>
           <h1 className="m-0 font-serif text-lg text-ink-900">
-            {room.partner.name}
+            {room.partner.displayName}
           </h1>
         </div>
       </header>
@@ -356,7 +356,7 @@ function buildRenderItems(
       key: msg.id,
       body: msg.body,
       isMine,
-      senderName: msg.sender?.name ?? null,
+      senderName: msg.sender?.displayName ?? null,
       time: placeholderTime,
       showName,
       showTime: false,
