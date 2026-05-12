@@ -154,16 +154,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       if (account.provider === "google") {
-        if (!profile?.sub) {
-          console.error("[auth] google profile.sub missing", { profile });
+        // NextAuth v5 beta 의 Google provider 는 시나리오에 따라 profile.sub 가
+        // 비어 들어오는 경우가 있다 (예: prompt=none, authuser=N multi-account).
+        // account.providerAccountId 는 NextAuth 가 항상 채워주는 안정적인 필드이며
+        // Google 의 경우 sub 와 동일하다. fallback 순서로 안전하게 처리.
+        const providerId =
+          account.providerAccountId ??
+          (typeof profile?.sub === "string" ? profile.sub : null);
+
+        if (!providerId) {
+          console.error("[auth] google providerId missing", {
+            providerAccountId: account.providerAccountId,
+            profileSub: profile?.sub,
+          });
           return false;
         }
+
         const payload: UpsertPayload = {
           provider: "google",
-          providerId: profile.sub,
-          name: user.name ?? profile.name ?? "구글 사용자",
-          email: user.email ?? profile.email ?? null,
-          imageUrl: user.image ?? profile.picture ?? null,
+          providerId,
+          name: user.name ?? profile?.name ?? "구글 사용자",
+          email: user.email ?? profile?.email ?? null,
+          imageUrl: user.image ?? profile?.picture ?? null,
         };
         try {
           const result = await upsertToBackend(payload);
